@@ -9,21 +9,25 @@ import org.openspaces.core.space.SpaceProxyConfigurer;
 import org.springframework.dao.DataAccessException;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.URI;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 import static com.gigaspaces.app.persistent_event_processing.common.Constants.NUM_OF_FLIGHTS;
-import static com.sun.xml.internal.ws.spi.db.BindingContextFactory.LOGGER;
-import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 
 public class Client {
 
@@ -32,7 +36,6 @@ public class Client {
     private static final Logger logger = Logger.getLogger(Client.class.getName());
 
     public static void main(String[] args) throws InterruptedException {
-//        setupLogger();
         log("Start Large Cluster Load Test");
 
         waitForSpaceToFillWithFlights(NUM_OF_FLIGHTS);
@@ -106,36 +109,14 @@ public class Client {
     }
 
     private static void log(String msg) {
-        logger.log(Level.SEVERE, msg);
+        logger.log(Level.INFO, msg);
     }
 
-    private static void setupLogger() {
-        LOGGER.setLevel(Level.ALL);
-        try {
-            FileHandler fhandler = new FileHandler("/home/eladg/logs/" + createLogFile());
-            SimpleFormatter sformatter = new SimpleFormatter();
-            fhandler.setFormatter(sformatter);
-            LOGGER.addHandler(fhandler);
-        } catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
-        } catch (SecurityException ex) {
-            LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
-        }
-    }
-
-    private static String createLogFile() throws IOException {
-        DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy-HH:mm:ss");
+    private static String createLogFileName() throws IOException {
+        DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy-HH:mm:ss");
         Date date = new Date();
 
         String filePath = dateFormat.format(date) + ".log";
-        File file = new File(filePath);
-
-        if (file.createNewFile())
-        {
-            System.out.println("File is created!");
-        } else {
-            System.out.println("File already exists.");
-        }
 
         return filePath;
     }
