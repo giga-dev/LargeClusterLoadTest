@@ -1,6 +1,8 @@
 package com.gigaspaces.app.persistent_event_processing.common.model;
 
-public class CrewMember {
+import java.io.Serializable;
+
+public class CrewMember implements Serializable {
     private CrewMemberInfo crewMemberInfo;
     private Integer sequenceId;
 

@@ -9,7 +9,7 @@ public class RandomUtils {
     private static Random random = new Random();
 
     public static Integer nextInt() {
-        return random.nextInt();
+        return random.nextInt() & Integer.MAX_VALUE; // transform to positive
     }
 
     public static String nextString() {

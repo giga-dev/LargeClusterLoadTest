@@ -2,9 +2,10 @@ package com.gigaspaces.app.persistent_event_processing.common.model;
 
 import com.gigaspaces.annotation.pojo.SpaceId;
 
+import java.io.Serializable;
 import java.util.Random;
 
-public class CrewMemberInfo {
+public class CrewMemberInfo implements Serializable {
     private Integer id;
     private String name;
     private Integer age;

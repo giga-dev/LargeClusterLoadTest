@@ -1,6 +1,8 @@
 package com.gigaspaces.app.persistent_event_processing.common.model;
 
-public class CommunicationInfo {
+import java.io.Serializable;
+
+public class CommunicationInfo implements Serializable {
 
     private CommunicationInfo(Integer homePhone, Integer celPhone) {
         this.homePhone = homePhone;

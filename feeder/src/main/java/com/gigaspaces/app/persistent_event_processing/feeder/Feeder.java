@@ -17,6 +17,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import static com.gigaspaces.app.persistent_event_processing.common.Constants.NUM_OF_FLIGHTS;
+
 /**
  * A feeder bean starts a scheduled task that writes a new Data objects to the space (in an
  * unprocessed state).
@@ -60,12 +62,17 @@ public class Feeder implements InitializingBean, DisposableBean {
 
     // This is the place to write static data into the space
     public void afterPropertiesSet() throws Exception {
-        log.info("--- STARTING FEEDER WITH CYCLE [" + defaultDelay + "]");
+        populateSpaceWithFlights();
 //        executorService = Executors.newScheduledThreadPool(1);
 //        feederTask = new FeederTask();
 //        sf = executorService.scheduleAtFixedRate(feederTask, defaultDelay, defaultDelay,TimeUnit.MILLISECONDS);
-        for (int i = 0; i < 1000000; i++) {
-            Flight flight = Flight.createFlight();
+    }
+
+    private void populateSpaceWithFlights() {
+        log.info("Start populating space with flights");
+
+        for (int flightNum = 0; flightNum < NUM_OF_FLIGHTS; flightNum++) {
+            Flight flight = Flight.createFlight(flightNum);
             gigaSpace.write(flight);
             for (CrewMember crewMember : flight.getCrewMembers()) {
                 gigaSpace.write(crewMember.getCrewMemberInfo());

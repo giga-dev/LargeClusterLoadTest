@@ -2,28 +2,31 @@ package com.gigaspaces.app.persistent_event_processing.common.model;
 
 import com.gigaspaces.annotation.pojo.SpaceId;
 
+import javax.persistence.Column;
+import javax.persistence.Id;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 public class Flight {
-    private Integer number;
+    private transient static final int MAX_CREW_MEMBERS = 20;
+    private Integer id;
     private List<CrewMember> crewMembers;
 
     public Flight() {}
 
-    private Flight(Integer number, List<CrewMember> crewMembers) {
-        this.number = number;
+    private Flight(Integer flightNumber, List<CrewMember> crewMembers) {
+        this.id = flightNumber;
         this.crewMembers = crewMembers;
     }
 
     public Flight(Integer flightNum) {
-        number = flightNum;
+        id = flightNum;
     }
 
-    public static Flight createFlight() {
-        int num = RandomUtils.nextInt();
-        return new Flight(num, createCrewMembers(num));
+    public static Flight createFlight(int flightNum) {
+        int numOfCrewMembers = flightNum % MAX_CREW_MEMBERS;
+
+        return new Flight(flightNum, createCrewMembers(numOfCrewMembers));
     }
 
     private static List<CrewMember> createCrewMembers(int numOfCrewMembers) {
@@ -36,13 +39,15 @@ public class Flight {
         return crewMembers;
     }
 
+    @Id
     @SpaceId
-    public Integer getNumber() {
-        return number;
+    @Column(name = "id")
+    public Integer getId() {
+        return id;
     }
 
-    public void setNumber(Integer number) {
-        this.number = number;
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public List<CrewMember> getCrewMembers() {
