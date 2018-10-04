@@ -72,6 +72,8 @@
                 <prop key="space-config.external-data-source.usage">read-only</prop>
                 <prop key="cluster-config.cache-loader.external-data-source">true</prop>
                 <prop key="cluster-config.cache-loader.central-data-source">true</prop>
+                <prop key="space-config.leader-election.zookeeper.connection-timeout">30000</prop>
+                <prop key="space-config.leader-election.zookeeper.session-timeout">45000</prop>
             </props>
         </os-core:properties>
     </os-core:space>
