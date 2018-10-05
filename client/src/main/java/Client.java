@@ -9,10 +9,7 @@ import org.openspaces.core.space.SpaceProxyConfigurer;
 import org.springframework.dao.DataAccessException;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.URI;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
@@ -36,6 +33,7 @@ public class Client {
     private static final Logger logger = Logger.getLogger(Client.class.getName());
 
     public static void main(String[] args) throws InterruptedException {
+        setupLogger();
         log("Start Large Cluster Load Test");
 
         waitForSpaceToFillWithFlights(NUM_OF_FLIGHTS);
@@ -112,7 +110,25 @@ public class Client {
         logger.log(Level.INFO, msg);
     }
 
-    private static String createLogFileName() throws IOException {
+    private static void setupLogger() {
+        logger.setLevel(Level.ALL);
+        try {
+            String logDirPath = System.getProperty("user.home") + "/logs";
+            createLogDirectoryInUserHomeDir(logDirPath);
+            String logFilePath = MessageFormat.format("{0}/{1}", logDirPath, generateLogFileNameByTimeStamp());
+            FileHandler fhandler = new FileHandler(logFilePath);
+            log("Log file created at: " + logFilePath);
+            SimpleFormatter sformatter = new SimpleFormatter();
+            fhandler.setFormatter(sformatter);
+            logger.addHandler(fhandler);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, ex.getMessage(), ex);
+        } catch (SecurityException ex) {
+            logger.log(Level.SEVERE, ex.getMessage(), ex);
+        }
+    }
+
+    private static String generateLogFileNameByTimeStamp() throws IOException {
         DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy-HH:mm:ss");
         Date date = new Date();
 
@@ -121,4 +137,13 @@ public class Client {
         return filePath;
     }
 
+    private static boolean createLogDirectoryInUserHomeDir(String path) {
+        boolean created = new File(path).mkdirs();
+
+        if (created) {
+            log("log directory created at: " + path);
+        }
+
+        return created;
+    }
 }
