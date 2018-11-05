@@ -31,15 +31,15 @@ public class Client {
     private static final GigaSpace gigaSpace = new GigaSpaceConfigurer(new SpaceProxyConfigurer("space").lookupGroups("EladPC")).gigaSpace();
     private static final long DELAY = 1000;
     private static final Logger logger = Logger.getLogger(Client.class.getName());
+    private static boolean active = true;
 
     public static void main(String[] args) throws InterruptedException {
         setupLogger();
         log("Start Large Cluster Load Test");
-
         waitForSpaceToFillWithFlights(NUM_OF_FLIGHTS);
         ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
-        executorService.scheduleAtFixedRate(() -> doQueries(), 0, DELAY, TimeUnit.MILLISECONDS);
-
+        executorService.scheduleAtFixedRate(Client::doQueries, 0, DELAY, TimeUnit.MILLISECONDS);
+        executorService.awaitTermination(30, TimeUnit.DAYS);
         log("Finish Large Cluster Load Test");
     }
 
@@ -60,10 +60,11 @@ public class Client {
     }
 
     private static void doQueries() {
+        int numOfFlights = gigaSpace.count(new Flight());
 
         try {
             for (int i = 0; i < 4; i++) {
-                List<CrewMember> crewMembers = getAllCrewOnFlight(RandomUtils.nextInt() % NUM_OF_FLIGHTS);
+                List<CrewMember> crewMembers = getAllCrewOnFlight(RandomUtils.nextInt() % numOfFlights);
                 for (int j = 0; j < 2; j++) {
                     int crewMemberIndex = RandomUtils.nextInt() % crewMembers.size();
                     Integer crewMemberId = crewMembers.get(crewMemberIndex).getCrewMemberInfo().getId();
@@ -74,6 +75,8 @@ public class Client {
             log("Got DataAccessException while reading from space", e);
         } catch (TimeoutException e) {
             log("Got TimeOut while reading from space", e);
+        } catch (Exception e) {
+            log("Got exception: ", e);
         }
     }
 

@@ -39,40 +39,20 @@ public class Feeder implements InitializingBean, DisposableBean {
 
     private long numberOfTypes = 10;
 
-    private long defaultDelay = 1000;
-
-    private FeederTask feederTask;
-
     @GigaSpaceContext
     private GigaSpace gigaSpace;
 
-    /**
-     * Sets the number of types that will be used to set {@link org.openspaces.example.data.common.Data#setType(Long)}.
-     *
-     * <p>The type is used as the routing index for partitioned space. This will affect the
-     * distribution of Data objects over a partitioned space.
-     */
-    public void setNumberOfTypes(long numberOfTypes) {
-        this.numberOfTypes = numberOfTypes;
-    }
-
-    public void setDefaultDelay(long defaultDelay) {
-        this.defaultDelay = defaultDelay;
-    }
-
     // This is the place to write static data into the space
     public void afterPropertiesSet() throws Exception {
-        populateSpaceWithFlights();
-//        executorService = Executors.newScheduledThreadPool(1);
-//        feederTask = new FeederTask();
-//        sf = executorService.scheduleAtFixedRate(feederTask, defaultDelay, defaultDelay,TimeUnit.MILLISECONDS);
+        new Thread(this::populateSpaceWithFlights).start();
     }
 
     private void populateSpaceWithFlights() {
-        log.info("Start populating space with flights");
+        int flightNum = gigaSpace.count(new Flight());
 
-        for (int flightNum = 0; flightNum < NUM_OF_FLIGHTS; flightNum++) {
-            Flight flight = Flight.createFlight(flightNum);
+        log.info("Start populating space with flights");
+        for (int i = 0; i < NUM_OF_FLIGHTS; i++) {
+            Flight flight = Flight.createFlight(flightNum++);
             gigaSpace.write(flight);
             for (CrewMember crewMember : flight.getCrewMembers()) {
                 gigaSpace.write(crewMember.getCrewMemberInfo());
@@ -85,11 +65,6 @@ public class Feeder implements InitializingBean, DisposableBean {
         sf = null;
         executorService.shutdown();
     }
-
-    public long getFeedCount() {
-        return feederTask.getCounter();
-    }
-
 
     public class FeederTask implements Runnable {
 
@@ -112,6 +87,5 @@ public class Feeder implements InitializingBean, DisposableBean {
             return counter;
         }
     }
-
 
 }

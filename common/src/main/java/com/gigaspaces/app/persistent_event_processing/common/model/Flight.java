@@ -24,7 +24,7 @@ public class Flight {
     }
 
     public static Flight createFlight(int flightNum) {
-        int numOfCrewMembers = flightNum % MAX_CREW_MEMBERS;
+        int numOfCrewMembers = (flightNum % MAX_CREW_MEMBERS) + 1;
 
         return new Flight(flightNum, createCrewMembers(numOfCrewMembers));
     }

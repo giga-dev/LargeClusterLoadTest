@@ -13,25 +13,8 @@ public class Processor {
 
     Logger log = Logger.getLogger(this.getClass().getName());
 
-    private long workDuration = 100;
-
-//    /**
-//     * Sets the simulated work duration (in milliseconds). Defaut to 100.
-//     */
-    public void setWorkDuration(long workDuration) {
-        this.workDuration = workDuration;
-    }
-
 //        @SpaceDataEvent
     public Data processData(Data data) {
-        // sleep to simulate some work
-        try {
-            Thread.sleep(workDuration);
-        } catch (InterruptedException e) {
-            // do nothing
-        }
-        data.setProcessed(true);
-        data.setData("PROCESSED : " + data.getRawData());
         log.info(" ------ PROCESSED : " + data);
         return data;
     }
