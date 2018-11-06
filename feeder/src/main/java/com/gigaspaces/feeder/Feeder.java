@@ -74,14 +74,16 @@ public class Feeder implements InitializingBean, DisposableBean {
     private List<List<CrewMember>> shuffleCrewMembers(List<CrewMember> crewMembers) {
         List<List<CrewMember>> shuffleList = new ArrayList<>(NUM_OF_CREW_MEMBERS_IN_SHUFFLE);
         int idx = 0;
-        for (int i = 0; i < NUM_OF_CREW_MEMBERS_IN_SHUFFLE; i++, idx++) {
+        for (int i = 0; i < NUM_OF_CREW_MEMBERS_IN_SHUFFLE; i++) {
             List<CrewMember> createdList = new ArrayList<>(NUM_OF_CREW_MEMBERS_IN_FLIGHT);
             for (int j = 0; j < NUM_OF_CREW_MEMBERS_IN_FLIGHT; j++) {
-                CrewMember crewMember = crewMembers.get(idx);
+                CrewMember crewMember = crewMembers.get(idx++);
                 createdList.add(crewMember);
             }
             shuffleList.add(createdList);
         }
+
+        return shuffleList;
     }
 
     public void destroy() throws Exception {
