@@ -36,7 +36,7 @@
         <property name="dataSource" ref="dataSource"/>
         <property name="annotatedClasses">
             <list>
-                <value>com.gigaspaces.app.persistent_event_processing.common.Data</value>
+                <value>com.gigaspaces.common.Data</value>
             </list>
         </property>
         <property name="hibernateProperties">

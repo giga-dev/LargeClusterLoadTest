@@ -24,7 +24,7 @@
 
     </dependencies>
     <build>
-        <finalName>my-app-mirror</finalName>
+        <finalName>mirror</finalName>
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>

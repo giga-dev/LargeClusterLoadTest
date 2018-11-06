@@ -1,4 +1,4 @@
-package com.gigaspaces.app.persistent_event_processing.common.model;
+package com.gigaspaces.common.model;
 
 import java.io.Serializable;
 

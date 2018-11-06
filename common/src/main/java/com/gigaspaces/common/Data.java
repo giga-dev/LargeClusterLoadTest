@@ -1,4 +1,4 @@
-package com.gigaspaces.app.persistent_event_processing.common;
+package com.gigaspaces.common;
 
 import com.gigaspaces.annotation.pojo.SpaceClass;
 import com.gigaspaces.annotation.pojo.SpaceId;

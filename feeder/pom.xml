@@ -23,7 +23,7 @@
         </dependency>
     </dependencies>
     <build>
-        <finalName>my-app-feeder</finalName>
+        <finalName>feeder</finalName>
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>

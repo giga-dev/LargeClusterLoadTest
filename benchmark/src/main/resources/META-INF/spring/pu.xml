@@ -18,7 +18,6 @@
     <bean id="propertiesConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="properties">
             <props>
-                <prop key="numberOfTypes">100</prop>
             </props>
         </property>
     </bean>
@@ -40,11 +39,8 @@
     -->
     <os-core:giga-space id="gigaSpace" space="space"/>
 
-    <!--
-        The Data feeder bean, writing new Data objects to the space in a constant interval.
-    -->
-    <bean id="dataFeeder" class="com.gigaspaces.feeder.Feeder" depends-on="gigaSpace">
-        <property name="numberOfTypes" value="${numberOfTypes}" />
+    <bean id="benchmark" class="main.Benchmark" depends-on="gigaSpace">
+
     </bean>
     
 </beans>

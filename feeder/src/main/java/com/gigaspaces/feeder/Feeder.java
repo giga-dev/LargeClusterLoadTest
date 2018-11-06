@@ -1,9 +1,9 @@
-package com.gigaspaces.app.persistent_event_processing.feeder;
+package com.gigaspaces.feeder;
 
-import com.gigaspaces.app.persistent_event_processing.common.Data;
+import com.gigaspaces.common.Data;
 
-import com.gigaspaces.app.persistent_event_processing.common.model.CrewMember;
-import com.gigaspaces.app.persistent_event_processing.common.model.Flight;
+import com.gigaspaces.common.model.CrewMember;
+import com.gigaspaces.common.model.Flight;
 import org.openspaces.core.GigaSpace;
 import org.openspaces.core.SpaceInterruptedException;
 import org.openspaces.core.context.GigaSpaceContext;
@@ -11,13 +11,13 @@ import org.openspaces.core.context.GigaSpaceContext;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
-import java.util.concurrent.Executors;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import static com.gigaspaces.app.persistent_event_processing.common.Constants.NUM_OF_FLIGHTS;
+import static com.gigaspaces.common.Constants.*;
 
 /**
  * A feeder bean starts a scheduled task that writes a new Data objects to the space (in an
@@ -48,15 +48,39 @@ public class Feeder implements InitializingBean, DisposableBean {
     }
 
     private void populateSpaceWithFlights() {
-        int flightNum = gigaSpace.count(new Flight());
+        int totalFlights = gigaSpace.count(new Flight());
+        log.info("Start populating space with " + NUM_OF_FLIGHTS_TO_WRITE + " flights");
+        List<CrewMember> crewMembers = createCrewMembers(NUM_OF_CREW_MEMBERS);
+        crewMembers.forEach(crewMember -> gigaSpace.write(crewMember));
+        List<List<CrewMember>> crewMembersShuffle = shuffleCrewMembers(crewMembers);
+        for (int flightNum = totalFlights; flightNum < NUM_OF_FLIGHTS_TO_WRITE + totalFlights; flightNum++) {
+            Flight flight = new Flight(flightNum);
+            List<CrewMember> crewMembersToPutInFlight = crewMembersShuffle.get(flightNum % NUM_OF_CREW_MEMBERS_IN_SHUFFLE);
+            flight.setCrewMembers(crewMembersToPutInFlight);
+        }
+        log.info("Finish populating space with flights");
+    }
 
-        log.info("Start populating space with flights");
-        for (int i = 0; i < NUM_OF_FLIGHTS; i++) {
-            Flight flight = Flight.createFlight(flightNum++);
-            gigaSpace.write(flight);
-            for (CrewMember crewMember : flight.getCrewMembers()) {
-                gigaSpace.write(crewMember.getCrewMemberInfo());
+    private List<CrewMember> createCrewMembers(int numOfCrewMembers) {
+        List<CrewMember> crewMembers = new ArrayList<>(numOfCrewMembers);
+
+        for (int id = 0; id < numOfCrewMembers; id++) {
+            crewMembers.add(CrewMember.createCrewMember(id));
+        }
+
+        return crewMembers;
+    }
+
+    private List<List<CrewMember>> shuffleCrewMembers(List<CrewMember> crewMembers) {
+        List<List<CrewMember>> shuffleList = new ArrayList<>(NUM_OF_CREW_MEMBERS_IN_SHUFFLE);
+        int idx = 0;
+        for (int i = 0; i < NUM_OF_CREW_MEMBERS_IN_SHUFFLE; i++, idx++) {
+            List<CrewMember> createdList = new ArrayList<>(NUM_OF_CREW_MEMBERS_IN_FLIGHT);
+            for (int j = 0; j < NUM_OF_CREW_MEMBERS_IN_FLIGHT; j++) {
+                CrewMember crewMember = crewMembers.get(idx);
+                createdList.add(crewMember);
             }
+            shuffleList.add(createdList);
         }
     }
 
@@ -88,4 +112,11 @@ public class Feeder implements InitializingBean, DisposableBean {
         }
     }
 
+    public long getNumberOfTypes() {
+        return numberOfTypes;
+    }
+
+    public void setNumberOfTypes(long numberOfTypes) {
+        this.numberOfTypes = numberOfTypes;
+    }
 }

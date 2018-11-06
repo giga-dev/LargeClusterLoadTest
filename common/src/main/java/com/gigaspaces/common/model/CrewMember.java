@@ -1,11 +1,10 @@
-package com.gigaspaces.app.persistent_event_processing.common.model;
+package com.gigaspaces.common.model;
 
 import com.gigaspaces.annotation.pojo.SpaceId;
 
 import java.io.Serializable;
-import java.util.Random;
 
-public class CrewMemberInfo implements Serializable {
+public class CrewMember implements Serializable {
     private Integer id;
     private String name;
     private Integer age;
@@ -13,10 +12,10 @@ public class CrewMemberInfo implements Serializable {
     private Integer salary;
     private CommunicationInfo communicationInfo;
 
-    public CrewMemberInfo() {
+    public CrewMember() {
     }
 
-    private CrewMemberInfo(Integer id, String name, Integer age, Integer numOfFlights, Integer salary, CommunicationInfo communicationInfo) {
+    private CrewMember(Integer id, String name, Integer age, Integer numOfFlights, Integer salary, CommunicationInfo communicationInfo) {
         this.id = id;
         this.name = name;
         this.age = age;
@@ -25,8 +24,8 @@ public class CrewMemberInfo implements Serializable {
         this.communicationInfo = communicationInfo;
     }
 
-    public static CrewMemberInfo createCrewMemberInfo() {
-        return new CrewMemberInfo(RandomUtils.nextInt(), RandomUtils.nextString(), RandomUtils.nextInt(),
+    public static CrewMember createCrewMember(int id) {
+        return new CrewMember(id, RandomUtils.nextString(), RandomUtils.nextInt(),
                 RandomUtils.nextInt(), RandomUtils.nextInt(), CommunicationInfo.createCommunicationInfo());
     }
 

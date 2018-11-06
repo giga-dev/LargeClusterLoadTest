@@ -1,4 +1,4 @@
-package com.gigaspaces.app.persistent_event_processing.common.model;
+package com.gigaspaces.common.model;
 
 import com.gigaspaces.annotation.pojo.SpaceId;
 
@@ -7,8 +7,9 @@ import javax.persistence.Id;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.gigaspaces.common.Constants.NUM_OF_CREW_MEMBERS_IN_FLIGHT;
+
 public class Flight {
-    private transient static final int MAX_CREW_MEMBERS = 20;
     private Integer id;
     private List<CrewMember> crewMembers;
 
@@ -23,17 +24,11 @@ public class Flight {
         id = flightNum;
     }
 
-    public static Flight createFlight(int flightNum) {
-        int numOfCrewMembers = (flightNum % MAX_CREW_MEMBERS) + 1;
-
-        return new Flight(flightNum, createCrewMembers(numOfCrewMembers));
-    }
-
-    private static List<CrewMember> createCrewMembers(int numOfCrewMembers) {
+    public static List<CrewMember> createCrewMembers(int numOfCrewMembers) {
         List<CrewMember> crewMembers = new ArrayList<CrewMember>(numOfCrewMembers);
 
         for (int i = 0; i < numOfCrewMembers; i++) {
-            crewMembers.add(CrewMember.createCrewMember());
+            crewMembers.add(CrewMember.createCrewMember(i));
         }
 
         return crewMembers;
