@@ -1,3 +1,5 @@
+package main;
+
 import com.gigaspaces.app.persistent_event_processing.common.model.CrewMember;
 import com.gigaspaces.app.persistent_event_processing.common.model.CrewMemberInfo;
 import com.gigaspaces.app.persistent_event_processing.common.model.Flight;
@@ -149,4 +151,5 @@ public class Client {
 
         return created;
     }
+
 }
