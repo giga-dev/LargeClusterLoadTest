@@ -48,8 +48,8 @@ public class Feeder implements InitializingBean, DisposableBean {
     }
 
     private void populateSpaceWithFlights() {
-        int totalFlights = gigaSpace.count(new Flight());
         log.info("Start populating space with " + NUM_OF_FLIGHTS_TO_WRITE + " flights");
+        int totalFlights = gigaSpace.count(new Flight());
         List<CrewMember> crewMembers = createCrewMembers(NUM_OF_CREW_MEMBERS);
         crewMembers.forEach(crewMember -> gigaSpace.write(crewMember));
         List<List<CrewMember>> crewMembersShuffle = shuffleCrewMembers(crewMembers);
@@ -57,6 +57,7 @@ public class Feeder implements InitializingBean, DisposableBean {
             Flight flight = new Flight(flightNum);
             List<CrewMember> crewMembersToPutInFlight = crewMembersShuffle.get(flightNum % NUM_OF_CREW_MEMBERS_IN_SHUFFLE);
             flight.setCrewMembers(crewMembersToPutInFlight);
+            gigaSpace.write(flight);
         }
         log.info("Finish populating space with flights");
     }

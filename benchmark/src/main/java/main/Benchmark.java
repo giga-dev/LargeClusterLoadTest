@@ -5,6 +5,7 @@ import com.gigaspaces.common.model.Flight;
 import com.j_spaces.core.client.SQLQuery;
 import org.openspaces.core.GigaSpace;
 import org.openspaces.core.GigaSpaceConfigurer;
+import org.openspaces.core.context.GigaSpaceContext;
 import org.openspaces.core.space.SpaceProxyConfigurer;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -30,9 +31,9 @@ import static com.gigaspaces.common.Constants.NUM_OF_FLIGHTS_TO_WRITE;
 
 public class Benchmark implements InitializingBean, DisposableBean {
 
-    //    @GigaSpaceContext
-//    private GigaSpace gigaSpace;
-    private static GigaSpace gigaSpace = new GigaSpaceConfigurer(new SpaceProxyConfigurer("space").lookupGroups("EladPC")).gigaSpace();
+    @GigaSpaceContext
+    private GigaSpace gigaSpace;
+//    private static GigaSpace gigaSpace = new GigaSpaceConfigurer(new SpaceProxyConfigurer("space").lookupGroups("EladPC")).gigaSpace();
     private static final long DELAY = 1000;
     private static final Logger logger = Logger.getLogger(Benchmark.class.getName());
     private Summery summery;
@@ -52,9 +53,9 @@ public class Benchmark implements InitializingBean, DisposableBean {
             executorService = Executors.newScheduledThreadPool(1);
             executorService.scheduleAtFixedRate(this::doQueries, 0, DELAY, TimeUnit.MILLISECONDS);
             // Debug Start
-            Thread.sleep(5000);
-            executorService.shutdown();
-            executorService.awaitTermination(30, TimeUnit.SECONDS);
+//            Thread.sleep(5000);
+//            executorService.shutdown();
+            executorService.awaitTermination(30, TimeUnit.DAYS);
             System.out.println(summery);
             // Debug End
 //            executorService.awaitTermination(30, TimeUnit.DAYS);
@@ -87,9 +88,9 @@ public class Benchmark implements InitializingBean, DisposableBean {
         try {
             int flightId = runningNum % maxIndex;
             List<CrewMember> crewMembers = getAllCrewOnFlight(flightId);
-            int crewMemberIndex = runningNum % crewMembers.size();
-            Integer crewMemberId = crewMembers.get(crewMemberIndex).getId();
-            getCrewMember(crewMemberId);
+            for (CrewMember crewMember : crewMembers) {
+                getCrewMember(crewMember.getId());
+            }
         } catch (DataAccessException e) {
             log("Got DataAccessException while reading from space", e);
         } catch (TimeoutException e) {
