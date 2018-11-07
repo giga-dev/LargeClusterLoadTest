@@ -4,12 +4,9 @@ import com.gigaspaces.common.model.CrewMember;
 import com.gigaspaces.common.model.Flight;
 import com.j_spaces.core.client.SQLQuery;
 import org.openspaces.core.GigaSpace;
-import org.openspaces.core.GigaSpaceConfigurer;
 import org.openspaces.core.context.GigaSpaceContext;
-import org.openspaces.core.space.SpaceProxyConfigurer;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.dao.DataAccessException;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +30,6 @@ public class Benchmark implements InitializingBean, DisposableBean {
 
     @GigaSpaceContext
     private GigaSpace gigaSpace;
-//    private static GigaSpace gigaSpace = new GigaSpaceConfigurer(new SpaceProxyConfigurer("space").lookupGroups("EladPC")).gigaSpace();
     private static final long DELAY = 1000;
     private static final Logger logger = Logger.getLogger(Benchmark.class.getName());
     private Summery summery;
@@ -51,7 +47,7 @@ public class Benchmark implements InitializingBean, DisposableBean {
             executorService.awaitTermination(30, TimeUnit.DAYS);
         } catch (InterruptedException e) {
             log("--------------------------------------------------------------------");
-            log("Test failed: ", e);
+            log("Benchmark failed: ", e);
             log("--------------------------------------------------------------------");
             executorService.shutdown();
         }
@@ -65,29 +61,29 @@ public class Benchmark implements InitializingBean, DisposableBean {
         while (!finish) {
             int numOfFlights = gigaSpace.count(new Flight());
             log("Current num of flights: " + numOfFlights);
-            if (numOfFlights == expectedNumOfFlights) {
+            if (numOfFlights >= expectedNumOfFlights) {
                 finish = true;
             } else {
+                log("Waiting for space to fill up with flights");
                 Thread.sleep(20000);
             }
         }
     }
 
     private void doQueries() {
-        int maxIndex = gigaSpace.count(new Flight());
+        int maxFlightId = gigaSpace.count(new Flight());
+
         try {
-            int flightId = runningNum % maxIndex;
+            int flightId = runningNum % maxFlightId;
             List<CrewMember> crewMembers = getAllCrewOnFlight(flightId);
             for (CrewMember crewMember : crewMembers) {
                 getCrewMember(crewMember.getId());
             }
-        } catch (DataAccessException e) {
-            log("Got DataAccessException while reading from space", e);
-        } catch (TimeoutException e) {
-            log("Got TimeOut while reading from space", e);
         } catch (Exception e) {
             log("Got exception: ", e);
+            summery.reportException(e);
         }
+
         runningNum++;
     }
 
@@ -115,7 +111,7 @@ public class Benchmark implements InitializingBean, DisposableBean {
         } else {
             long end = System.currentTimeMillis();
             long queryTime = end - start;
-            summery.updateOnSuccessfulQuery(queryTime);
+            summery.reportSuccessfulQuery(queryTime);
             return res;
         }
     }

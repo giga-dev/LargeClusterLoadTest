@@ -1,11 +1,19 @@
 package main;
 
+import java.util.Hashtable;
+import java.util.Map;
+
 public class Summery {
     private long minTime;
     private long maxTime;
     private long sumTime;
     private long totalQueries;
     private long successfulQueries;
+    private Map<String, Integer> thrownExceptions; // <e.simpleName, numOfThrownExceptions>
+
+    public Summery() {
+        this.thrownExceptions = new Hashtable<String, Integer>();
+    }
 
     private long avgQueryTime() {
         return sumTime / successfulQueries;
@@ -19,8 +27,9 @@ public class Summery {
         return successfulQueries;
     }
 
-    public void updateOnSuccessfulQuery(long queryTime) {
+    public void reportSuccessfulQuery(long queryTime) {
         successfulQueries++;
+        sumTime += queryTime;
 
         if (queryTime < minTime) {
             minTime = queryTime;
@@ -29,22 +38,51 @@ public class Summery {
         if (queryTime > maxTime) {
             maxTime = queryTime;
         }
+
     }
 
-    @Override
-    public String toString() {
-        return new StringBuilder("").append('\n').append('\n')
-                .append("-------------Summery Start-------------").append('\n')
-                .append("Total num of queries: " + totalQueries).append('\n')
-                .append("Successful queries: " + successfulQueries).append('\n')
-                .append("Avg query time in milliseconds: " + avgQueryTime()).append('\n')
-                .append("Min query time: " + minTime).append('\n')
-                .append("Max query time: " + maxTime).append('\n')
-                .append("-------------Summery end-------------").append('\n')
-                .toString();
+    private String formatThrownExceptions() {
+        StringBuilder stringBuilder = new StringBuilder("Thrown exceptions by type: ").append('\n');
+
+        thrownExceptions.forEach(
+                (name, amount) -> stringBuilder.append(name + " : " + amount).append('\n')
+        );
+
+        return stringBuilder.toString();
     }
 
     public void incNumOfQueries() {
         totalQueries++;
+    }
+
+    public <E extends Exception> void reportException(E e) {
+        String simpleName = e.getClass().getSimpleName();
+        Integer currentAmountOfThrownExceptions = thrownExceptions.get(simpleName);
+        Integer newAmountOfThrownExceptions;
+
+        if (currentAmountOfThrownExceptions != null) {
+            newAmountOfThrownExceptions = currentAmountOfThrownExceptions + 1;
+        } else {
+            newAmountOfThrownExceptions = 1;
+        }
+
+        thrownExceptions.put(simpleName, newAmountOfThrownExceptions);
+    }
+
+    @Override
+    public String toString() {
+        long failedQueries = totalQueries - successfulQueries;
+
+        return new StringBuilder("").append('\n').append('\n')
+                .append("-------------Summery Start-------------").append('\n')
+                .append("Total num of queries: " + totalQueries).append('\n')
+                .append("Successful queries: " + successfulQueries).append('\n')
+                .append("Failed queries: " + failedQueries).append('\n')
+                .append("Avg query time in milliseconds: " + avgQueryTime()).append('\n')
+                .append("Min query time: " + minTime).append('\n')
+                .append("Max query time: " + maxTime).append('\n')
+                .append(formatThrownExceptions())
+                .append("-------------Summery end-------------").append('\n')
+                .toString();
     }
 }
