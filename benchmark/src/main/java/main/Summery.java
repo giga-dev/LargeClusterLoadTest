@@ -35,16 +35,16 @@ public class Summery {
         return successfulQueries;
     }
 
-    public void reportSuccessfulQuery(long queryTimeInMilliSeconds) {
+    public void reportSuccessfulQuery(long queryTimeInNanoSeconds) {
         successfulQueries++;
-        sumTime += queryTimeInMilliSeconds;
+        sumTime += queryTimeInNanoSeconds;
 
-        if (queryTimeInMilliSeconds < minTime) {
-            minTime = queryTimeInMilliSeconds;
+        if (queryTimeInNanoSeconds < minTime) {
+            minTime = queryTimeInNanoSeconds;
         }
 
-        if (queryTimeInMilliSeconds > maxTime) {
-            maxTime = queryTimeInMilliSeconds;
+        if (queryTimeInNanoSeconds > maxTime) {
+            maxTime = queryTimeInNanoSeconds;
         }
 
     }
@@ -86,9 +86,9 @@ public class Summery {
                 .append("Total num of queries: " + totalQueries).append('\n')
                 .append("Successful queries: " + successfulQueries).append('\n')
                 .append("Failed queries: " + failedQueries).append('\n')
-                .append("Avg query time in milliseconds: " + avgQueryTime()).append('\n')
-                .append("Min query time: " + minTime).append('\n')
-                .append("Max query time: " + maxTime).append('\n')
+                .append("Avg query time in nanoseconds: " + avgQueryTime()).append('\n')
+                .append("Min query time in nanoseconds: " + minTime).append('\n')
+                .append("Max query time in nanoseconds: " + maxTime).append('\n')
                 .append(formatThrownExceptions())
                 .append("-------------Summery end-------------").append('\n')
                 .toString();

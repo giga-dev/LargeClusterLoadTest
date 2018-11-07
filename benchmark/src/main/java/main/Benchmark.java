@@ -34,7 +34,8 @@ public class Benchmark implements InitializingBean, DisposableBean {
     private static final Logger logger = Logger.getLogger(Benchmark.class.getName());
     private Summery summery;
     private static int runningNum = 0;
-    private ScheduledExecutorService executorService;
+    private ScheduledExecutorService queriesExecutorService;
+    private ScheduledExecutorService printSummeryExecutorService;
 
     public void run() {
         summery = new Summery();
@@ -42,14 +43,18 @@ public class Benchmark implements InitializingBean, DisposableBean {
         log("Start Benchmark");
         try {
             waitForSpaceToFillWithFlights(NUM_OF_FLIGHTS_TO_WRITE);
-            executorService = Executors.newScheduledThreadPool(1);
-            executorService.scheduleAtFixedRate(this::doQueries, 0, DELAY, TimeUnit.MILLISECONDS);
-            executorService.awaitTermination(30, TimeUnit.DAYS);
+
+            printSummeryExecutorService = Executors.newScheduledThreadPool(1);
+            printSummeryExecutorService.scheduleAtFixedRate(() -> log(summery.toString()), 0, 1, TimeUnit.MINUTES);
+
+            queriesExecutorService = Executors.newScheduledThreadPool(1);
+            queriesExecutorService.scheduleAtFixedRate(this::doQueries, 0, DELAY, TimeUnit.MILLISECONDS);
+            queriesExecutorService.awaitTermination(30, TimeUnit.DAYS);
         } catch (InterruptedException e) {
             log("--------------------------------------------------------------------");
             log("Benchmark failed: ", e);
             log("--------------------------------------------------------------------");
-            executorService.shutdown();
+            queriesExecutorService.shutdown();
         }
     }
 
@@ -111,9 +116,8 @@ public class Benchmark implements InitializingBean, DisposableBean {
         } else {
             long end = System.nanoTime();
             long queryTimeInNanoSeconds = end - start;
-            long queryTimeInMilliSeconds = TimeUnit.NANOSECONDS.toMillis(queryTimeInNanoSeconds);
-            summery.reportSuccessfulQuery(queryTimeInMilliSeconds);
-            log(String.format("Query took %d milliseconds\n", queryTimeInMilliSeconds));
+            summery.reportSuccessfulQuery(queryTimeInNanoSeconds);
+            log(String.format("Query took %d nano seconds\n", queryTimeInNanoSeconds));
         }
 
         return res;
@@ -168,8 +172,10 @@ public class Benchmark implements InitializingBean, DisposableBean {
     @Override
     public void destroy() throws Exception {
         log("Benchmark End");
-        executorService.shutdown();
-        executorService.awaitTermination(10, TimeUnit.SECONDS);
+        printSummeryExecutorService.shutdown();
+        printSummeryExecutorService.awaitTermination(10, TimeUnit.SECONDS);
+        queriesExecutorService.shutdown();
+        queriesExecutorService.awaitTermination(10, TimeUnit.SECONDS);
         log(summery.toString());
     }
 
