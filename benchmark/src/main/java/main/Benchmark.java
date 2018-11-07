@@ -40,25 +40,15 @@ public class Benchmark implements InitializingBean, DisposableBean {
     private static int runningNum = 0;
     private ScheduledExecutorService executorService;
 
-    public static void main(String[] args) {
-        new Benchmark().run();
-    }
-
     public void run() {
         summery = new Summery();
         setupLogger();
-        log("Start Large Cluster Load Test");
+        log("Start Benchmark");
         try {
             waitForSpaceToFillWithFlights(NUM_OF_FLIGHTS_TO_WRITE);
             executorService = Executors.newScheduledThreadPool(1);
             executorService.scheduleAtFixedRate(this::doQueries, 0, DELAY, TimeUnit.MILLISECONDS);
-            // Debug Start
-//            Thread.sleep(5000);
-//            executorService.shutdown();
             executorService.awaitTermination(30, TimeUnit.DAYS);
-            System.out.println(summery);
-            // Debug End
-//            executorService.awaitTermination(30, TimeUnit.DAYS);
         } catch (InterruptedException e) {
             log("--------------------------------------------------------------------");
             log("Test failed: ", e);
@@ -178,15 +168,15 @@ public class Benchmark implements InitializingBean, DisposableBean {
 
     @Override
     public void destroy() throws Exception {
+        log("Benchmark End");
         executorService.shutdown();
         executorService.awaitTermination(10, TimeUnit.SECONDS);
-        log("Finish Large Cluster Load Test");
         log(summery.toString());
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        new Thread(this::run);
+        new Thread(this::run).start();
     }
 
 }

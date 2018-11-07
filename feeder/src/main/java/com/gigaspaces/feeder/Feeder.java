@@ -52,10 +52,10 @@ public class Feeder implements InitializingBean, DisposableBean {
         int totalFlights = gigaSpace.count(new Flight());
         List<CrewMember> crewMembers = createCrewMembers(NUM_OF_CREW_MEMBERS);
         crewMembers.forEach(crewMember -> gigaSpace.write(crewMember));
-        List<List<CrewMember>> crewMembersShuffle = shuffleCrewMembers(crewMembers);
+        List<List<CrewMember>> crewMembersBuckets = createCrewMembersBuckets(crewMembers);
         for (int flightNum = totalFlights; flightNum < NUM_OF_FLIGHTS_TO_WRITE + totalFlights; flightNum++) {
             Flight flight = new Flight(flightNum);
-            List<CrewMember> crewMembersToPutInFlight = crewMembersShuffle.get(flightNum % NUM_OF_CREW_MEMBERS_IN_SHUFFLE);
+            List<CrewMember> crewMembersToPutInFlight = crewMembersBuckets.get(flightNum % NUM_OF_CREW_MEMBERS_BUCKETS);
             flight.setCrewMembers(crewMembersToPutInFlight);
             gigaSpace.write(flight);
         }
@@ -72,19 +72,19 @@ public class Feeder implements InitializingBean, DisposableBean {
         return crewMembers;
     }
 
-    private List<List<CrewMember>> shuffleCrewMembers(List<CrewMember> crewMembers) {
-        List<List<CrewMember>> shuffleList = new ArrayList<>(NUM_OF_CREW_MEMBERS_IN_SHUFFLE);
-        int idx = 0;
-        for (int i = 0; i < NUM_OF_CREW_MEMBERS_IN_SHUFFLE; i++) {
-            List<CrewMember> createdList = new ArrayList<>(NUM_OF_CREW_MEMBERS_IN_FLIGHT);
-            for (int j = 0; j < NUM_OF_CREW_MEMBERS_IN_FLIGHT; j++) {
-                CrewMember crewMember = crewMembers.get(idx++);
-                createdList.add(crewMember);
-            }
-            shuffleList.add(createdList);
+    private List<List<CrewMember>> createCrewMembersBuckets(List<CrewMember> crewMembers) {
+        List<List<CrewMember>> buckets = new ArrayList<>(NUM_OF_CREW_MEMBERS_BUCKETS);
+        int bucketStartIdx = 0;
+
+        for (int bucketNum = 0; bucketNum < NUM_OF_CREW_MEMBERS_BUCKETS; bucketNum++) {
+            int bucketEndIdx = bucketStartIdx + NUM_OF_CREW_MEMBERS_IN_FLIGHT;
+            List<CrewMember> list = new ArrayList<>(NUM_OF_CREW_MEMBERS_IN_FLIGHT);
+            crewMembers.subList(bucketStartIdx, bucketEndIdx).forEach(crewMember -> list.add(crewMember));
+            buckets.add(bucketNum, list);
+            bucketStartIdx = bucketEndIdx;
         }
 
-        return shuffleList;
+        return buckets;
     }
 
     public void destroy() throws Exception {

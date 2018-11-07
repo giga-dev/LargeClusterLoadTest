@@ -33,7 +33,8 @@ public class Summery {
 
     @Override
     public String toString() {
-        return new StringBuilder("-------------Summery Start-------------").append('\n')
+        return new StringBuilder("").append('\n').append('\n')
+                .append("-------------Summery Start-------------").append('\n')
                 .append("Total num of queries: " + totalQueries).append('\n')
                 .append("Successful queries: " + successfulQueries).append('\n')
                 .append("Avg query time in milliseconds: " + avgQueryTime()).append('\n')
