@@ -44,10 +44,10 @@ public class Feeder implements InitializingBean, DisposableBean {
 
     // This is the place to write static data into the space
     public void afterPropertiesSet() throws Exception {
-        new Thread(this::populateSpaceWithFlights).start();
+        new Thread(this::populateSpace).start();
     }
 
-    private void populateSpaceWithFlights() {
+    private void populateSpace() {
         log.info("Start populating space with " + NUM_OF_FLIGHTS_TO_WRITE + " flights");
         int totalFlights = gigaSpace.count(new Flight());
         List<CrewMember> crewMembers = createCrewMembers(NUM_OF_CREW_MEMBERS);
