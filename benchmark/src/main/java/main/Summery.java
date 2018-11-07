@@ -16,7 +16,15 @@ public class Summery {
     }
 
     private long avgQueryTime() {
-        return sumTime / successfulQueries;
+        long avg;
+
+        if (successfulQueries != 0) {
+            avg = sumTime / successfulQueries;
+        } else {
+            avg = 0;
+        }
+
+        return avg;
     }
 
     public long getTotalQueries() {
@@ -27,16 +35,16 @@ public class Summery {
         return successfulQueries;
     }
 
-    public void reportSuccessfulQuery(long queryTime) {
+    public void reportSuccessfulQuery(long queryTimeInMilliSeconds) {
         successfulQueries++;
-        sumTime += queryTime;
+        sumTime += queryTimeInMilliSeconds;
 
-        if (queryTime < minTime) {
-            minTime = queryTime;
+        if (queryTimeInMilliSeconds < minTime) {
+            minTime = queryTimeInMilliSeconds;
         }
 
-        if (queryTime > maxTime) {
-            maxTime = queryTime;
+        if (queryTimeInMilliSeconds > maxTime) {
+            maxTime = queryTimeInMilliSeconds;
         }
 
     }

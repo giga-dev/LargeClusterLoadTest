@@ -101,7 +101,7 @@ public class Benchmark implements InitializingBean, DisposableBean {
     }
 
     private <T> T queryById(int id, int timeout, Class<T> type) throws TimeoutException {
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
         String query = String.format("id = %d", id);
         T res = gigaSpace.read(new SQLQuery<>(type, query), timeout);
 
@@ -109,11 +109,14 @@ public class Benchmark implements InitializingBean, DisposableBean {
         if (res == null) {
             throw new TimeoutException();
         } else {
-            long end = System.currentTimeMillis();
-            long queryTime = end - start;
-            summery.reportSuccessfulQuery(queryTime);
-            return res;
+            long end = System.nanoTime();
+            long queryTimeInNanoSeconds = end - start;
+            long queryTimeInMilliSeconds = TimeUnit.NANOSECONDS.toMillis(queryTimeInNanoSeconds);
+            summery.reportSuccessfulQuery(queryTimeInMilliSeconds);
+            log(String.format("Query took %d milliseconds\n", queryTimeInMilliSeconds));
         }
+
+        return res;
     }
 
     private static void log(String msg, Exception e) {
