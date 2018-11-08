@@ -1,19 +1,15 @@
 package com.gigaspaces.feeder;
 
-import com.gigaspaces.common.Data;
-
 import com.gigaspaces.common.model.CrewMember;
 import com.gigaspaces.common.model.Flight;
 import org.openspaces.core.GigaSpace;
-import org.openspaces.core.SpaceInterruptedException;
 import org.openspaces.core.context.GigaSpaceContext;
-
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.logging.Logger;
 
@@ -33,8 +29,6 @@ public class Feeder implements InitializingBean, DisposableBean {
 
     Logger log = Logger.getLogger(this.getClass().getName());
 
-    private ScheduledExecutorService executorService;
-
     private ScheduledFuture<?> sf;
 
     private long numberOfTypes = 10;
@@ -50,8 +44,29 @@ public class Feeder implements InitializingBean, DisposableBean {
     private void populateSpace() {
         log.info("Start populating space with " + NUM_OF_FLIGHTS_TO_WRITE + " flights");
         int totalFlights = gigaSpace.count(new Flight());
-        List<CrewMember> crewMembers = createCrewMembers(NUM_OF_CREW_MEMBERS);
-        crewMembers.forEach(crewMember -> gigaSpace.write(crewMember));
+        List<CrewMember> crewMembers = populateWithCrewMembersIfNeeded(); // Make sure the there is NUM_OF_CREW_MEMBERS in the space
+        populateWithFlights(totalFlights, crewMembers);
+        log.info("Finish populating space with flights");
+    }
+
+    private List<CrewMember> populateWithCrewMembersIfNeeded() {
+        CrewMember[] readCrewMembersArray = gigaSpace.readMultiple(new CrewMember());
+        List<CrewMember> crewMembers = new ArrayList<CrewMember>(Arrays.asList(readCrewMembersArray));
+        int numOfCrewMembersInSpace = crewMembers.size();
+
+        if (numOfCrewMembersInSpace < NUM_OF_CREW_MEMBERS) {
+
+            for (int id = numOfCrewMembersInSpace; id < NUM_OF_CREW_MEMBERS; id++) {
+                crewMembers.add(CrewMember.createCrewMember(id));
+            }
+
+            gigaSpace.writeMultiple(crewMembers.toArray());
+        }
+
+        return crewMembers;
+    }
+
+    private void populateWithFlights(int totalFlights, List<CrewMember> crewMembers) {
         List<List<CrewMember>> crewMembersBuckets = createCrewMembersBuckets(crewMembers);
         for (int flightNum = totalFlights; flightNum < NUM_OF_FLIGHTS_TO_WRITE + totalFlights; flightNum++) {
             Flight flight = new Flight(flightNum);
@@ -59,17 +74,6 @@ public class Feeder implements InitializingBean, DisposableBean {
             flight.setCrewMembers(crewMembersToPutInFlight);
             gigaSpace.write(flight);
         }
-        log.info("Finish populating space with flights");
-    }
-
-    private List<CrewMember> createCrewMembers(int numOfCrewMembers) {
-        List<CrewMember> crewMembers = new ArrayList<>(numOfCrewMembers);
-
-        for (int id = 0; id < numOfCrewMembers; id++) {
-            crewMembers.add(CrewMember.createCrewMember(id));
-        }
-
-        return crewMembers;
     }
 
     private List<List<CrewMember>> createCrewMembersBuckets(List<CrewMember> crewMembers) {
@@ -88,31 +92,6 @@ public class Feeder implements InitializingBean, DisposableBean {
     }
 
     public void destroy() throws Exception {
-        sf.cancel(false);
-        sf = null;
-        executorService.shutdown();
-    }
-
-    public class FeederTask implements Runnable {
-
-        private long counter = 1;
-
-        public void run() {
-            try {
-                long time = System.currentTimeMillis();
-                Data data = new Data((counter++ % numberOfTypes), "FEEDER " + Long.toString(time));
-                gigaSpace.write(data);
-                log.info("--- FEEDER WROTE " + data);
-            } catch (SpaceInterruptedException e) {
-                // ignore, we are being shutdown
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        public long getCounter() {
-            return counter;
-        }
     }
 
     public long getNumberOfTypes() {
