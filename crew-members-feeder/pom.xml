@@ -2,13 +2,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.gigaspaces.app.persistent_event_processing</groupId>
-    <artifactId>feeder</artifactId>
+    <artifactId>crew-members-feeder</artifactId>
     <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
-    <name>feeder</name>
+    <name>crew-members-feeder</name>
     <parent>
         <groupId>com.gigaspaces.app.persistent_event_processing</groupId>
-        <artifactId>my-app</artifactId>
+        <artifactId>large-cluster-loadtest</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <properties>
@@ -23,7 +23,7 @@
         </dependency>
     </dependencies>
     <build>
-        <finalName>feeder</finalName>
+        <finalName>crew-members-feeder</finalName>
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>

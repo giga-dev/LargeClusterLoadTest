@@ -2,10 +2,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.gigaspaces.app.persistent_event_processing</groupId>
-    <artifactId>space</artifactId>
+    <artifactId>flights-feeder</artifactId>
     <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
-    <name>space</name>
+    <name>flights-feeder</name>
     <parent>
         <groupId>com.gigaspaces.app.persistent_event_processing</groupId>
         <artifactId>large-cluster-loadtest</artifactId>
@@ -21,10 +21,9 @@
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
-
     </dependencies>
     <build>
-        <finalName>space</finalName>
+        <finalName>flights-feeder</finalName>
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -45,6 +44,14 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>8</source>
+                    <target>8</target>
+                </configuration>
             </plugin>
         </plugins>
     </build>

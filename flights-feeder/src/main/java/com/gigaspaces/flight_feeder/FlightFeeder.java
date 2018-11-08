@@ -1,4 +1,4 @@
-package com.gigaspaces.feeder;
+package com.gigaspaces.flight_feeder;
 
 import com.gigaspaces.common.model.CrewMember;
 import com.gigaspaces.common.model.Flight;
@@ -9,8 +9,8 @@ import org.springframework.beans.factory.InitializingBean;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ScheduledFuture;
 import java.util.logging.Logger;
 
 import static com.gigaspaces.common.Constants.*;
@@ -25,62 +25,52 @@ import static com.gigaspaces.common.Constants.*;
  * <p>The scheduling uses the java.util.concurrent Scheduled Executor Service. It is started and
  * stopped based on Spring lifecycle events.
  */
-public class Feeder implements InitializingBean, DisposableBean {
+public class FlightFeeder implements InitializingBean, DisposableBean {
 
     Logger log = Logger.getLogger(this.getClass().getName());
-
-    private ScheduledFuture<?> sf;
-
-    private long numberOfTypes = 10;
 
     @GigaSpaceContext
     private GigaSpace gigaSpace;
 
     // This is the place to write static data into the space
     public void afterPropertiesSet() throws Exception {
-        new Thread(this::populateSpace).start();
+        new Thread(this::populateSpaceWithFlights).start();
     }
 
-    private void populateSpace() {
+    private void populateSpaceWithFlights() {
         log.info("Start populating space with " + NUM_OF_FLIGHTS_TO_WRITE + " flights");
-        int totalFlights = gigaSpace.count(new Flight());
-        List<CrewMember> crewMembers = populateWithCrewMembersIfNeeded(); // Make sure the there is NUM_OF_CREW_MEMBERS in the space
-        populateWithFlights(totalFlights, crewMembers);
+        int numOfFlightsInSpace = gigaSpace.count(new Flight());
+        List<CrewMember> crewMembers = getCrewMembersFromSpace();
+        crewMembers.sort(Comparator.comparing(CrewMember::getId));
+        List<List<CrewMember>> crewMembersBuckets = createCrewMembersBuckets(crewMembers);
+        int maxFlightId = numOfFlightsInSpace + NUM_OF_FLIGHTS_TO_WRITE;
+        int numOfCrewMembers = crewMembers.size();
+        int numOfBuckets = numOfCrewMembers / NUM_OF_CREW_MEMBERS_IN_FLIGHT;
+
+        for (int id = numOfFlightsInSpace; id < maxFlightId; id++) {
+            Flight flight = new Flight(id);
+            List<CrewMember> crewMembersToPutInFlight = crewMembersBuckets.get(id % numOfBuckets);
+            flight.setCrewMembers(crewMembersToPutInFlight);
+            gigaSpace.write(flight);
+        }
+
         log.info("Finish populating space with flights");
     }
 
-    private List<CrewMember> populateWithCrewMembersIfNeeded() {
+    private List<CrewMember> getCrewMembersFromSpace() {
         CrewMember[] readCrewMembersArray = gigaSpace.readMultiple(new CrewMember());
         List<CrewMember> crewMembers = new ArrayList<CrewMember>(Arrays.asList(readCrewMembersArray));
-        int numOfCrewMembersInSpace = crewMembers.size();
-
-        if (numOfCrewMembersInSpace < NUM_OF_CREW_MEMBERS) {
-
-            for (int id = numOfCrewMembersInSpace; id < NUM_OF_CREW_MEMBERS; id++) {
-                crewMembers.add(CrewMember.createCrewMember(id));
-            }
-
-            gigaSpace.writeMultiple(crewMembers.toArray());
-        }
 
         return crewMembers;
     }
 
-    private void populateWithFlights(int totalFlights, List<CrewMember> crewMembers) {
-        List<List<CrewMember>> crewMembersBuckets = createCrewMembersBuckets(crewMembers);
-        for (int flightNum = totalFlights; flightNum < NUM_OF_FLIGHTS_TO_WRITE + totalFlights; flightNum++) {
-            Flight flight = new Flight(flightNum);
-            List<CrewMember> crewMembersToPutInFlight = crewMembersBuckets.get(flightNum % NUM_OF_CREW_MEMBERS_BUCKETS);
-            flight.setCrewMembers(crewMembersToPutInFlight);
-            gigaSpace.write(flight);
-        }
-    }
-
     private List<List<CrewMember>> createCrewMembersBuckets(List<CrewMember> crewMembers) {
-        List<List<CrewMember>> buckets = new ArrayList<>(NUM_OF_CREW_MEMBERS_BUCKETS);
+        int numOfCrewMembers = crewMembers.size();
+        int numOfBuckets = numOfCrewMembers / NUM_OF_CREW_MEMBERS_IN_FLIGHT;
+        List<List<CrewMember>> buckets = new ArrayList<>(numOfBuckets);
         int bucketStartIdx = 0;
 
-        for (int bucketNum = 0; bucketNum < NUM_OF_CREW_MEMBERS_BUCKETS; bucketNum++) {
+        for (int bucketNum = 0; bucketNum < numOfBuckets; bucketNum++) {
             int bucketEndIdx = bucketStartIdx + NUM_OF_CREW_MEMBERS_IN_FLIGHT;
             List<CrewMember> list = new ArrayList<>(NUM_OF_CREW_MEMBERS_IN_FLIGHT);
             crewMembers.subList(bucketStartIdx, bucketEndIdx).forEach(crewMember -> list.add(crewMember));
@@ -92,13 +82,5 @@ public class Feeder implements InitializingBean, DisposableBean {
     }
 
     public void destroy() throws Exception {
-    }
-
-    public long getNumberOfTypes() {
-        return numberOfTypes;
-    }
-
-    public void setNumberOfTypes(long numberOfTypes) {
-        this.numberOfTypes = numberOfTypes;
     }
 }

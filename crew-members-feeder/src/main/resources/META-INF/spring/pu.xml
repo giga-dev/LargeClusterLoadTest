@@ -43,8 +43,7 @@
     <!--
         The Data feeder bean, writing new Data objects to the space in a constant interval.
     -->
-    <bean id="dataFeeder" class="com.gigaspaces.feeder.Feeder" depends-on="gigaSpace">
-        <property name="numberOfTypes" value="${numberOfTypes}" />
+    <bean id="dataFeeder" class="com.gigaspaces.crew_Member_feeder.CrewMemberFeeder" depends-on="gigaSpace">
     </bean>
     
 </beans>

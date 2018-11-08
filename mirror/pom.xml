@@ -8,7 +8,7 @@
     <name>mirror</name>
     <parent>
         <groupId>com.gigaspaces.app.persistent_event_processing</groupId>
-        <artifactId>my-app</artifactId>
+        <artifactId>large-cluster-loadtest</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <properties>
