@@ -86,9 +86,9 @@ public class Summery {
                 .append("Total num of queries: " + totalQueries).append('\n')
                 .append("Successful queries: " + successfulQueries).append('\n')
                 .append("Failed queries: " + failedQueries).append('\n')
-                .append("Avg query time in nanoseconds: " + avgQueryTime()).append('\n')
-                .append("Min query time in nanoseconds: " + minTime).append('\n')
-                .append("Max query time in nanoseconds: " + maxTime).append('\n')
+                .append("Avg query time in microseconds: " + avgQueryTime()).append('\n')
+                .append("Min query time in microseconds: " + minTime).append('\n')
+                .append("Max query time in microseconds: " + maxTime).append('\n')
                 .append(formatThrownExceptions())
                 .append("-------------Summery end-------------").append('\n')
                 .toString();
