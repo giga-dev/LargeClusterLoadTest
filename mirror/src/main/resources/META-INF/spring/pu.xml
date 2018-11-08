@@ -16,7 +16,7 @@
         <property name="dataSource"><ref bean="dataSource"/></property>
         <property name="serverProperties">
             <props>
-                <prop key="server.database.0">/home/eladg/my-app-testDB</prop>
+                <prop key="server.database.0">/home/${USER}/my-app-testDB</prop>
                 <prop key="server.dbname.0">testDB</prop>
             </props>
         </property>
