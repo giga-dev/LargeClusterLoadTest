@@ -4,7 +4,7 @@ import java.util.Hashtable;
 import java.util.Map;
 
 public class Summery {
-    private long minTime;
+    private long minTime = Long.MAX_VALUE;
     private long maxTime;
     private long sumTime;
     private long totalQueries;
