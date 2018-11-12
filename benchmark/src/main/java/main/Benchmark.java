@@ -30,7 +30,6 @@ public class Benchmark implements InitializingBean, DisposableBean {
 
     @GigaSpaceContext
     private GigaSpace gigaSpace;
-    private static final long DELAY = 1000;
     private static final Logger logger = Logger.getLogger(Benchmark.class.getName());
     private Summery summery;
     private static int runningNum = 0;
@@ -43,19 +42,25 @@ public class Benchmark implements InitializingBean, DisposableBean {
         log("Start Benchmark");
         try {
             waitForSpaceToFillWithFlights(NUM_OF_FLIGHTS_TO_WRITE);
-
-            printSummeryExecutorService = Executors.newScheduledThreadPool(1);
-            printSummeryExecutorService.scheduleAtFixedRate(() -> log(summery.toString()), 0, 1, TimeUnit.MINUTES);
-
-            queriesExecutorService = Executors.newScheduledThreadPool(1);
-            queriesExecutorService.scheduleAtFixedRate(this::doQueries, 0, DELAY, TimeUnit.MILLISECONDS);
-            queriesExecutorService.awaitTermination(30, TimeUnit.DAYS);
+            initPrintSummeryExecuter();
+            initDoQueriesExecutor();
         } catch (InterruptedException e) {
             log("--------------------------------------------------------------------");
             log("Benchmark failed: ", e);
             log("--------------------------------------------------------------------");
             queriesExecutorService.shutdown();
         }
+    }
+
+    private void initDoQueriesExecutor() throws InterruptedException {
+        queriesExecutorService = Executors.newScheduledThreadPool(1);
+        queriesExecutorService.scheduleAtFixedRate(this::doQueries, 0, 1, TimeUnit.SECONDS);
+        queriesExecutorService.awaitTermination(30, TimeUnit.DAYS);
+    }
+
+    private void initPrintSummeryExecuter() throws InterruptedException {
+        printSummeryExecutorService = Executors.newScheduledThreadPool(1);
+        printSummeryExecutorService.scheduleAtFixedRate(() -> log(summery.toString()), 0, 1, TimeUnit.MINUTES);
     }
 
     private void waitForSpaceToFillWithFlights(int expectedNumOfFlights) throws InterruptedException {
