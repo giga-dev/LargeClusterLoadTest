@@ -84,11 +84,16 @@ public class Benchmark implements InitializingBean, DisposableBean {
         int maxFlightId = gigaSpace.count(new Flight());
 
         try {
+            summery.incNumOfSetOfQueries();
+            long queryStartTimeNano = System.nanoTime();
             int flightId = runningNum % maxFlightId;
             List<CrewMember> crewMembers = getAllCrewOnFlight(flightId);
             for (CrewMember crewMember : crewMembers) {
                 getCrewMember(crewMember.getId());
             }
+            long queryEndTimeNano = System.nanoTime();
+            long queryTimeInNanoSeconds = queryEndTimeNano - queryStartTimeNano;
+            summery.reportSuccessfulSetOfQueries(queryTimeInNanoSeconds);
         } catch (Exception e) {
             log("Got exception: ", e);
             summery.reportException(e);
@@ -181,6 +186,7 @@ public class Benchmark implements InitializingBean, DisposableBean {
         printSummeryExecutorService.awaitTermination(10, TimeUnit.SECONDS);
         queriesExecutorService.shutdown();
         queriesExecutorService.awaitTermination(10, TimeUnit.SECONDS);
+        log("Printing final summery ...");
         log(summery.toString());
     }
 
