@@ -31,12 +31,14 @@ public class Benchmark implements InitializingBean, DisposableBean {
     @GigaSpaceContext
     private GigaSpace gigaSpace;
     private static final Logger logger = Logger.getLogger(Benchmark.class.getName());
-    private Summery summery;
     private static int runningNum = 0;
-    private ScheduledExecutorService queriesExecutorService;
-    private ScheduledExecutorService printSummeryExecutorService;
+    private ScheduledExecutorService queriesService;
+    private ScheduledExecutorService printSummeryService;
+    private OperationsTimeTaker opTimeRecorder;
+    private Summery summery;
 
     public void run() {
+        opTimeRecorder = new OperationsTimeTaker();
         summery = new Summery();
         setupLogger();
         log("Start Benchmark");
@@ -48,19 +50,20 @@ public class Benchmark implements InitializingBean, DisposableBean {
             log("--------------------------------------------------------------------");
             log("Benchmark failed: ", e);
             log("--------------------------------------------------------------------");
-            queriesExecutorService.shutdown();
+            queriesService.shutdown();
         }
     }
 
     private void initDoQueriesExecutor() throws InterruptedException {
-        queriesExecutorService = Executors.newScheduledThreadPool(1);
-        queriesExecutorService.scheduleAtFixedRate(this::doQueries, 0, 1, TimeUnit.SECONDS);
-        queriesExecutorService.awaitTermination(30, TimeUnit.DAYS);
+        queriesService = Executors.newScheduledThreadPool(1);
+        queriesService.scheduleAtFixedRate(this::doQueries, 0, 1, TimeUnit.SECONDS);
+        queriesService.awaitTermination(30, TimeUnit.DAYS);
     }
 
     private void initPrintSummeryExecuter() throws InterruptedException {
-        printSummeryExecutorService = Executors.newScheduledThreadPool(1);
-        printSummeryExecutorService.scheduleAtFixedRate(() -> log(summery.toString()), 0, 1, TimeUnit.MINUTES);
+        printSummeryService = Executors.newScheduledThreadPool(1);
+        Runnable task = () -> log(summery.intermediateSummery());
+        printSummeryService.scheduleAtFixedRate(task, 0, 30, TimeUnit.SECONDS);
     }
 
     private void waitForSpaceToFillWithFlights(int expectedNumOfFlights) throws InterruptedException {
@@ -84,16 +87,11 @@ public class Benchmark implements InitializingBean, DisposableBean {
         int maxFlightId = gigaSpace.count(new Flight());
 
         try {
-            summery.incNumOfSetOfQueries();
-            long queryStartTimeNano = System.nanoTime();
             int flightId = runningNum % maxFlightId;
-            List<CrewMember> crewMembers = getAllCrewOnFlight(flightId);
+            List<CrewMember> crewMembers = runGetAllCrewOnFlightQuery(flightId);
             for (CrewMember crewMember : crewMembers) {
-                getCrewMember(crewMember.getId());
+                runGetCrewMemberQuery(crewMember.getId());
             }
-            long queryEndTimeNano = System.nanoTime();
-            long queryTimeInNanoSeconds = queryEndTimeNano - queryStartTimeNano;
-            summery.reportSuccessfulSetOfQueries(queryTimeInNanoSeconds);
         } catch (Exception e) {
             log("Got exception: ", e);
             summery.reportException(e);
@@ -102,32 +100,27 @@ public class Benchmark implements InitializingBean, DisposableBean {
         runningNum++;
     }
 
-    private List<CrewMember> getAllCrewOnFlight(Integer flightId) throws TimeoutException {
-        log("Running Query on flight number: " + flightId);
+    private List<CrewMember> runGetAllCrewOnFlightQuery(Integer flightId) throws TimeoutException {
         Flight flight = queryById(flightId, 1000, Flight.class);
 
         return flight.getCrewMembers();
     }
 
-    private CrewMember getCrewMember(Integer id) throws TimeoutException {
-        log("Running Query on crew member with id: " + id);
-
+    private CrewMember runGetCrewMemberQuery(Integer id) throws TimeoutException {
         return queryById(id, 500, CrewMember.class);
     }
 
     private <T> T queryById(int id, int timeout, Class<T> type) throws TimeoutException {
-        long start = System.nanoTime();
         String query = String.format("id = %d", id);
+        summery.incTotalQueries();
+        opTimeRecorder.reportOperationStart();
         T res = gigaSpace.read(new SQLQuery<>(type, query), timeout);
 
-        summery.incNumOfQueries();
         if (res == null) {
             throw new TimeoutException();
         } else {
-            long end = System.nanoTime();
-            long queryTimeInNanoSeconds = end - start;
-            summery.reportSuccessfulQuery(queryTimeInNanoSeconds);
-            log(String.format("Query took %d nano seconds\n", queryTimeInNanoSeconds));
+            long queryDurationNano = opTimeRecorder.reportOperationEnd();
+            summery.reportQueryDuration(queryDurationNano);
         }
 
         return res;
@@ -182,12 +175,12 @@ public class Benchmark implements InitializingBean, DisposableBean {
     @Override
     public void destroy() throws Exception {
         log("Benchmark End");
-        printSummeryExecutorService.shutdown();
-        printSummeryExecutorService.awaitTermination(10, TimeUnit.SECONDS);
-        queriesExecutorService.shutdown();
-        queriesExecutorService.awaitTermination(10, TimeUnit.SECONDS);
+        printSummeryService.shutdown();
+        printSummeryService.awaitTermination(10, TimeUnit.SECONDS);
+        queriesService.shutdown();
+        queriesService.awaitTermination(10, TimeUnit.SECONDS);
         log("Printing final summery ...");
-        log(summery.toString());
+        log(summery.finalSummery());
     }
 
     @Override

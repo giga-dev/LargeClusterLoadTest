@@ -3,45 +3,31 @@ package main;
 import java.text.MessageFormat;
 import java.util.Hashtable;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+
+import static java.text.MessageFormat.*;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public class Summery {
-    private long minTime = Long.MAX_VALUE;
-    private long maxTime;
-    private long sumTime;
+    private static final long MAX_EXPECTED_QUERY_DURATION_NANO = MILLISECONDS.toNanos(500);
+    private String name;
+    private long queryMinTimeNano = Long.MAX_VALUE;
+    private long queryMaxTimeNano;
+    private long querySumTimeNano;
     private long totalQueries;
-    private long successfulQueries;
+    private long successQueries;
     private Map<String, Integer> thrownExceptions; // <e.simpleName, numOfThrownExceptions>
-
-    private long setMinTime = Long.MAX_VALUE;
-    private long setMaxTime;
-    private long setSumTime;
-    private long totalSetOfQueries;
-    private long successfulSetsOfQueries;
+    private int numOfExceptionalQueries;
+    private int sumOfExceptionalQueries;
 
     public Summery() {
+        this.name = "Summery";
         this.thrownExceptions = new Hashtable<String, Integer>();
     }
 
-    private String formatThrownExceptions() {
-        StringBuilder stringBuilder = new StringBuilder("Thrown exceptions by type: ").append('\n');
-
-        thrownExceptions.forEach(
-                (name, amount) -> stringBuilder.append(name + " : " + amount).append('\n')
-        );
-
-        return stringBuilder.toString();
-    }
-
-    public void incNumOfQueries() {
+    public void incTotalQueries() {
         totalQueries++;
     }
-
-    public void incNumOfSetOfQueries() {
-        totalSetOfQueries++;
-    }
-
-
 
     public <E extends Exception> void reportException(E e) {
         String simpleName = e.getClass().getSimpleName();
@@ -57,38 +43,30 @@ public class Summery {
         thrownExceptions.put(simpleName, newAmountOfThrownExceptions);
     }
 
-    public void reportSuccessfulQuery(long queryTimeInNanoSeconds) {
-        successfulQueries++;
-        sumTime += queryTimeInNanoSeconds;
+    public void reportQueryDuration(long duration) {
+        successQueries++;
+        querySumTimeNano += duration;
 
-        if (queryTimeInNanoSeconds < minTime) {
-            minTime = queryTimeInNanoSeconds;
+        if (MAX_EXPECTED_QUERY_DURATION_NANO < duration) {
+            this.numOfExceptionalQueries++;
+            this.sumOfExceptionalQueries += duration;
         }
 
-        if (queryTimeInNanoSeconds > maxTime) {
-            maxTime = queryTimeInNanoSeconds;
+        if (duration < queryMinTimeNano) {
+            queryMinTimeNano = duration;
+        }
+
+        if (duration > queryMaxTimeNano) {
+            queryMaxTimeNano = duration;
         }
 
     }
 
-    public void reportSuccessfulSetOfQueries(long timeNanoSeconds) {
-        successfulSetsOfQueries++;
-        setSumTime += timeNanoSeconds;
-
-        if (timeNanoSeconds < setMinTime) {
-            setMinTime = timeNanoSeconds;
-        }
-
-        if (timeNanoSeconds > setMaxTime) {
-            setMaxTime = timeNanoSeconds;
-        }
-    }
-
-    private long avgQueryTime() {
+    private long avgOpTime() {
         long avg;
 
-        if (successfulQueries != 0) {
-            avg = sumTime / successfulQueries;
+        if (successQueries != 0) {
+            avg = querySumTimeNano / successQueries;
         } else {
             avg = 0;
         }
@@ -96,46 +74,73 @@ public class Summery {
         return avg;
     }
 
-    private long avgSetOfQueriesTime() {
-        long avg;
+    private String formatQueriesDuration() {
+        long avgOpTimeNano = avgOpTime();
+        long minOpTime = queryMinTimeNano == Long.MAX_VALUE ? 0 : queryMinTimeNano;
 
-        if (successfulSetsOfQueries != 0) {
-            avg = setSumTime / successfulSetsOfQueries;
+        StringBuilder sb = new StringBuilder()
+                .append(format("min query time: {0} ({1} ns)\n", formatNanoTime(minOpTime), minOpTime))
+                .append(format("max query time: {0}\n", formatNanoTime(queryMaxTimeNano)))
+                .append(format("avg query time: {0}\n", formatNanoTime(avgOpTimeNano)));
+        return sb.toString();
+    }
+
+    private String formatThrownExceptions() {
+        StringBuilder stringBuilder = new StringBuilder("Thrown exceptions by type: ").append('\n');
+
+        thrownExceptions.forEach(
+                (name, amount) -> stringBuilder.append(name + " : " + amount).append('\n')
+        );
+
+        return stringBuilder.toString();
+    }
+
+    private String formatExceptionalQueries() {
+        long avgQueryTime;
+
+        if (numOfExceptionalQueries != 0) {
+            avgQueryTime = sumOfExceptionalQueries / numOfExceptionalQueries;
         } else {
-            avg = 0;
+            avgQueryTime = 0;
         }
 
-        return avg;
+        StringBuilder sb = new StringBuilder("")
+                .append(MessageFormat.format("num of exceptional queries: {0}\n", numOfExceptionalQueries))
+                .append(MessageFormat.format("avg exceptional queries time: {0}\n", avgQueryTime));
+
+        return sb.toString();
     }
 
-    private String formatNanoTime(String initMsg, long timeInNano) {
-        return MessageFormat.format("{0}: {1} nano seconds ({2} ms)", initMsg, timeInNano, TimeUnit.NANOSECONDS.toMillis(timeInNano));
-    }
-
-    @Override
-    public String toString() {
-        long failedQueries = totalQueries - successfulQueries;
-        long failedSetOfQueries = totalSetOfQueries - successfulSetsOfQueries;
-
-        return new StringBuilder("").append("\n\n")
-                .append("-------------Summery Start-------------").append('\n')
-                .append("Single queries details: \n").append('\n')
-                .append("Total num of queries: " + totalQueries).append('\n')
-                .append("Successful single queries: " + successfulQueries).append('\n')
-                .append("Failed queries: " + failedQueries).append('\n')
-                .append(formatNanoTime("avg single query time: ", avgQueryTime())).append('\n')
-                .append(formatNanoTime("min single query time: ", minTime)).append('\n')
-                .append(formatNanoTime("max single query time: ", maxTime)).append("\n\n")
-                .append("Set of queries details: ").append('\n')
-                .append("Total num of sets of queries: " + totalSetOfQueries).append('\n')
-                .append("Successful sets of queries: " + successfulSetsOfQueries).append('\n')
-                .append("Failed queries: " + failedSetOfQueries).append('\n')
-                .append(formatNanoTime("avg set of queries time: ", avgSetOfQueriesTime())).append('\n')
-                .append(formatNanoTime("min set of queries time: ", setMinTime)).append('\n')
-                .append(formatNanoTime("max set of queries time: ", setMaxTime)).append('\n')
+    public String intermediateSummery() {
+        return new StringBuilder("")
+                .append("\n\n-------------Intermediate Summery Start-------------").append('\n')
+                .append(format("{0} info:\n", name))
+                .append(format("Total num of queries: {0}\n", totalQueries))
+                .append(formatQueriesDuration())
+                .append(formatExceptionalQueries())
                 .append(formatThrownExceptions())
-                .append("-------------Summery end-------------").append('\n')
+                .append("-------------Intermediate Summery End-------------").append('\n')
                 .toString();
+    }
+
+    public String finalSummery() {
+        long failedQueries = totalQueries - successQueries;
+
+        return new StringBuilder("")
+                .append("\n\n-------------Final Summery Start-------------").append('\n')
+                .append(format("{0} info:\n", name))
+                .append(format("Total num of queries: {0}\n", totalQueries))
+                .append(format("Successful queries: {0}\n", successQueries))
+                .append(format("Failed queries: {0}\n", failedQueries))
+                .append(formatQueriesDuration())
+                .append(formatThrownExceptions())
+                .append(formatExceptionalQueries())
+                .append("-------------Final Summery end-------------").append('\n')
+                .toString();
+    }
+
+    private String formatNanoTime(long nanoTime) {
+        return format("{0} ms", NANOSECONDS.toMillis(nanoTime));
     }
 
 }
