@@ -13,12 +13,12 @@ public class Summery {
     private String name;
     private long queryMinTimeNano = Long.MAX_VALUE;
     private long queryMaxTimeNano;
-    private long querySumTimeNano;
+    private long totalQueriesTime;
     private long totalQueries;
     private long successQueries;
     private Map<String, Integer> thrownExceptions; // <e.simpleName, numOfThrownExceptions>
     private int numOfExceptionalQueries;
-    private int sumOfExceptionalQueries;
+    private int totalExceptionalQueriesTime;
 
     public Summery() {
         this.name = "Summery";
@@ -45,11 +45,11 @@ public class Summery {
 
     public void reportQueryDuration(long duration) {
         successQueries++;
-        querySumTimeNano += duration;
+        totalQueriesTime += duration;
 
         if (MAX_EXPECTED_QUERY_DURATION_NANO < duration) {
             this.numOfExceptionalQueries++;
-            this.sumOfExceptionalQueries += duration;
+            this.totalExceptionalQueriesTime += duration;
         }
 
         if (duration < queryMinTimeNano) {
@@ -62,11 +62,11 @@ public class Summery {
 
     }
 
-    private long avgOpTime() {
+    private long avgQueryTime() {
         long avg;
 
         if (successQueries != 0) {
-            avg = querySumTimeNano / successQueries;
+            avg = totalQueriesTime / successQueries;
         } else {
             avg = 0;
         }
@@ -75,13 +75,13 @@ public class Summery {
     }
 
     private String formatQueriesDuration() {
-        long avgOpTimeNano = avgOpTime();
-        long minOpTime = queryMinTimeNano == Long.MAX_VALUE ? 0 : queryMinTimeNano;
+        long avg = avgQueryTime();
+        long min = queryMinTimeNano == Long.MAX_VALUE ? 0 : queryMinTimeNano;
 
         StringBuilder sb = new StringBuilder()
-                .append(format("min query time: {0} ({1} ns)\n", formatNanoTime(minOpTime), minOpTime))
+                .append(format("min query time: {0} ({1} ns)\n", formatNanoTime(min), min))
                 .append(format("max query time: {0}\n", formatNanoTime(queryMaxTimeNano)))
-                .append(format("avg query time: {0}\n", formatNanoTime(avgOpTimeNano)));
+                .append(format("avg query time: {0}\n", formatNanoTime(avg)));
         return sb.toString();
     }
 
@@ -99,7 +99,7 @@ public class Summery {
         long avgQueryTime;
 
         if (numOfExceptionalQueries != 0) {
-            avgQueryTime = sumOfExceptionalQueries / numOfExceptionalQueries;
+            avgQueryTime = totalExceptionalQueriesTime / numOfExceptionalQueries;
         } else {
             avgQueryTime = 0;
         }
