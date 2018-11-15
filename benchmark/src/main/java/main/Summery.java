@@ -81,7 +81,8 @@ public class Summery {
         StringBuilder sb = new StringBuilder()
                 .append(format("min query time: {0} ({1} ns)\n", formatNanoTime(min), min))
                 .append(format("max query time: {0}\n", formatNanoTime(queryMaxTimeNano)))
-                .append(format("avg query time: {0}\n", formatNanoTime(avg)));
+                .append(format("avg query time: {0} ({1} ns)\n", formatNanoTime(avg), avg));
+
         return sb.toString();
     }
 
