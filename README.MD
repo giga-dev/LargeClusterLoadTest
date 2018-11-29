@@ -27,11 +27,10 @@
 
 -------------Intermediate Summery Start-------------
 
-.
-
-.
+..
 
 -------------Intermediate Summery End-------------
 
 this intermediate report is printed every 30s
+
 4. To stop the benchmark and see final summary undeploy the benchmark pu and have look at his gcs
