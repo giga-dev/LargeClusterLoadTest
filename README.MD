@@ -24,9 +24,14 @@
   
   **you don't have to undeploy the feeders because they are not active after they write the objects to space(1 time only)**
 3. Have a look at the gsc that the benchmark pu sitting at to see **intermediate reports** like this:
+
 -------------Intermediate Summery Start-------------
+
 .
+
 .
+
 -------------Intermediate Summery End-------------
+
 this intermediate report is printed every 30s
 4. To stop the benchmark and see final summary undeploy the benchmark pu and have look at his gcs
