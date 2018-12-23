@@ -26,14 +26,23 @@
 3. Have a look at the gsc that the benchmark pu sitting at to see **intermediate reports** like this:
 
 -------------Intermediate Summery Start-------------
+
 Summery info:
+
 Total num of queries: 2,310
+
 min query time: 1 ms (1,087,377 ns)
+
 max query time: 43 ms
+
 avg query time: 1 ms (1,976,335 ns)
+
 num of exceptional queries: 0
+
 avg exceptional queries time: 0
+
 Thrown exceptions by type: 
+
 -------------Intermediate Summery End-------------
 
 this intermediate report is printed every 30s
