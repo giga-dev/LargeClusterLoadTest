@@ -21,7 +21,7 @@ public class Summery {
     private int totalExceptionalQueriesTime;
 
     public Summery() {
-        this.name = "Summery";
+        this.name = "Summary";
         this.thrownExceptions = new Hashtable<String, Integer>();
     }
 
@@ -114,13 +114,13 @@ public class Summery {
 
     public String intermediateSummery() {
         return new StringBuilder("")
-                .append("\n\n-------------Intermediate Summery Start-------------").append('\n')
+                .append("\n\n-------------Intermediate Summary Start-------------").append('\n')
                 .append(format("{0} info:\n", name))
                 .append(format("Total num of queries: {0}\n", totalQueries))
                 .append(formatQueriesDuration())
                 .append(formatExceptionalQueries())
                 .append(formatThrownExceptions())
-                .append("-------------Intermediate Summery End-------------").append('\n')
+                .append("-------------Intermediate Summary End-------------").append('\n')
                 .toString();
     }
 
@@ -128,7 +128,7 @@ public class Summery {
         long failedQueries = totalQueries - successQueries;
 
         return new StringBuilder("")
-                .append("\n\n-------------Final Summery Start-------------").append('\n')
+                .append("\n\n-------------Final Summary Start-------------").append('\n')
                 .append(format("{0} info:\n", name))
                 .append(format("Total num of queries: {0}\n", totalQueries))
                 .append(format("Successful queries: {0}\n", successQueries))
@@ -136,7 +136,7 @@ public class Summery {
                 .append(formatQueriesDuration())
                 .append(formatThrownExceptions())
                 .append(formatExceptionalQueries())
-                .append("-------------Final Summery end-------------").append('\n')
+                .append("-------------Final Summary end-------------").append('\n')
                 .toString();
     }
 

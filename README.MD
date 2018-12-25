@@ -11,9 +11,10 @@
 * flights-feeder - reading the crewmembers from space, then populating the space with 1000 with each deployment (evenly spread to all datagrids)
 * benchmark - client that constantly queries the space for flights and crew members every 1 sec and print a summery of the queries duration every 30 sec
 
-#### Running intructions:
-1. Build the project (cd into project directory and run: ```mvn clean install```)
-2. Deploy the pu's - here you have 2 options:
+#### Running instructions:
+1. Verify in pom.xml that correct gsVersion used
+2. Build the project (cd into project directory and run: ```mvn clean install```)
+3. Deploy the pu's - here you have 2 options:
 * **option1(this option for local deployment only):** run: ```mvn xap:deploy``` from the project root directory to deploy all the pu's in one line using mvn plugin
 * **option2:** deploy each pu manually(gs-ui/webui/cli) **at this order**:
   * mirror
@@ -23,7 +24,7 @@
   * benchmark
   
   **you don't have to undeploy the feeders because they are not active after they write the objects to space(1 time only)**
-3. Have a look at the gsc that the benchmark pu sitting at to see **intermediate reports** like this:
+4. Have a look at the gsc that the benchmark pu sitting at to see **intermediate reports** like this:
 
 -------------Intermediate Summery Start-------------
 

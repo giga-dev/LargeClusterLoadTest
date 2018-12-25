@@ -19,7 +19,7 @@
 		</pluginRepository>
 	</pluginRepositories>
     <properties>
-        <gsVersion>12.3.0-rc2</gsVersion>
+        <gsVersion>14.0.1-SNAPSHOT</gsVersion>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <modules>
@@ -40,7 +40,7 @@
         <dependency>
             <groupId>org.gigaspaces</groupId>
             <artifactId>xap-openspaces</artifactId>
-            <version>12.3.0-rc2</version>
+            <version>${gsVersion}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -84,7 +84,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>xap-maven-plugin</artifactId>
-                <version>12.3.0-rc2</version>
+                <version>${gsVersion}</version>
             </plugin>
         </plugins>
     </build>
@@ -98,7 +98,7 @@
                 <dependency>
                     <groupId>org.gigaspaces</groupId>
                     <artifactId>xap-openspaces</artifactId>
-                    <version>12.3.0-rc2</version>
+                    <version>${gsVersion}</version>
                     <scope>compile</scope>
                 </dependency>
                 <dependency>
@@ -120,7 +120,7 @@
                     <dependency>
                         <groupId>org.gigaspaces</groupId>
                         <artifactId>xap-openspaces</artifactId>
-                        <version>12.3.0-rc2</version>
+                        <version>${gsVersion}</version>
                         <type>pom</type>
                         <scope>import</scope>
                     </dependency>
