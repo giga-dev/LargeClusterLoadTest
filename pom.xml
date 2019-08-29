@@ -19,7 +19,7 @@
 		</pluginRepository>
 	</pluginRepositories>
     <properties>
-        <gsVersion>14.2.0-SNAPSHOT</gsVersion>
+        <gsVersion>15.0.0-SNAPSHOT</gsVersion>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <modules>
