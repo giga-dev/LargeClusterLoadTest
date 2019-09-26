@@ -24,6 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
+import static com.gigaspaces.common.Constants.NUM_OF_CREW_MEMBERS;
 import static com.gigaspaces.common.Constants.NUM_OF_FLIGHTS_TO_WRITE;
 
 public class Benchmark implements InitializingBean, DisposableBean {
@@ -43,7 +44,8 @@ public class Benchmark implements InitializingBean, DisposableBean {
         setupLogger();
         log("Start Benchmark");
         try {
-            waitForSpaceToFillWithFlights(NUM_OF_FLIGHTS_TO_WRITE);
+            //waitForSpaceToFillWithFlights(NUM_OF_FLIGHTS_TO_WRITE);
+            waitForSpaceToFillWithCrewMembers(NUM_OF_CREW_MEMBERS);
             initPrintSummeryExecuter();
             initDoQueriesExecutor();
         } catch (InterruptedException e) {
@@ -57,6 +59,7 @@ public class Benchmark implements InitializingBean, DisposableBean {
     private void initDoQueriesExecutor() throws InterruptedException {
         queriesService = Executors.newScheduledThreadPool(1);
         queriesService.scheduleAtFixedRate(this::doQueries, 0, 1, TimeUnit.SECONDS);
+        queriesService.scheduleAtFixedRate(this::doBurstQuery, 0, 1, TimeUnit.MINUTES);
         queriesService.awaitTermination(30, TimeUnit.DAYS);
     }
 
@@ -66,7 +69,7 @@ public class Benchmark implements InitializingBean, DisposableBean {
         printSummeryService.scheduleAtFixedRate(task, 0, 30, TimeUnit.SECONDS);
     }
 
-    private void waitForSpaceToFillWithFlights(int expectedNumOfFlights) throws InterruptedException {
+    /*private void waitForSpaceToFillWithFlights(int expectedNumOfFlights) throws InterruptedException {
         boolean finish = false;
 
         log(MessageFormat.format("Wait for space to fill with {0} flights", expectedNumOfFlights));
@@ -81,9 +84,64 @@ public class Benchmark implements InitializingBean, DisposableBean {
                 Thread.sleep(20000);
             }
         }
+    }*/
+
+    private void waitForSpaceToFillWithCrewMembers(int expectedNumOfCrewMembers) throws InterruptedException {
+        boolean finish = false;
+
+        log(MessageFormat.format("Wait for space to fill with {0} crew members", expectedNumOfCrewMembers));
+
+        while (!finish) {
+            int numOfCrewMembers = gigaSpace.count(new CrewMember());
+            log("++++++++++++++Current num of crew members: ++++++++++++++++++++++++" + numOfCrewMembers);
+            if (numOfCrewMembers >= expectedNumOfCrewMembers) {
+                finish = true;
+            } else {
+                log("Waiting for space to fill up with CrewMembers");
+                Thread.sleep(20000);
+            }
+        }
     }
 
     private void doQueries() {
+        try {
+            CrewMember[] member = gigaSpace.readMultiple(new SQLQuery<>(CrewMember.class, null), 100);
+            //log("+++++++++++++the id of the crew member is : " + member[0].getId() + "++++++++++++++++");
+        } catch (Exception e) {
+            log("Got exception: ", e);
+            summery.reportException(e);
+        }
+
+        runningNum++;
+    }
+
+    private void doBurstQuery() {
+        long startTime = System.currentTimeMillis();
+
+        while ((System.currentTimeMillis() - startTime) < (1000 * 20)) {
+            getAllCrewMembers();
+            log("a second in dobrustQuery has passed");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                log("Got exception: ", e);
+                summery.reportException(e);
+            }
+        }
+    }
+
+    private void getAllCrewMembers() {
+        try {
+            CrewMember[] allMembers = queryAll(CrewMember.class);
+            log("+++++++++++++number of all crew members: " + allMembers.length + "+++++++++++++");
+        } catch (Exception e) {
+            log("Got exception: ", e);
+            summery.reportException(e);
+        }
+    }
+
+
+ /*   private void doQueries() {
         int maxFlightId = gigaSpace.count(new Flight());
 
         try {
@@ -98,7 +156,7 @@ public class Benchmark implements InitializingBean, DisposableBean {
         }
 
         runningNum++;
-    }
+    }*/
 
     private List<CrewMember> runGetAllCrewOnFlightQuery(Integer flightId) throws TimeoutException {
         Flight flight = queryById(flightId, 1000, Flight.class);
@@ -125,6 +183,24 @@ public class Benchmark implements InitializingBean, DisposableBean {
 
         return res;
     }
+
+    private <T> T[] queryAll(Class <T> type) throws TimeoutException {
+        //String query = String.format("id = %d", id);
+        summery.incTotalQueries();
+        opTimeRecorder.reportOperationStart();
+        T[] res = gigaSpace.readMultiple(new SQLQuery<>(type, null), 200);
+
+        if (res == null) {
+            throw new TimeoutException();
+        } else {
+            long queryDurationNano = opTimeRecorder.reportOperationEnd();
+            summery.reportQueryDuration(queryDurationNano);
+        }
+
+        return res;
+    }
+
+
 
     private static void log(String msg, Exception e) {
         logger.log(Level.SEVERE, msg);

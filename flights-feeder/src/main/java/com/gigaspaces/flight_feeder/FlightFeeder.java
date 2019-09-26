@@ -34,7 +34,7 @@ public class FlightFeeder implements InitializingBean, DisposableBean {
 
     // This is the place to write static data into the space
     public void afterPropertiesSet() throws Exception {
-        new Thread(this::populateSpaceWithFlights).start();
+        //new Thread(this::populateSpaceWithFlights).start();
     }
 
     private void populateSpaceWithFlights() {
