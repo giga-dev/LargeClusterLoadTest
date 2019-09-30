@@ -94,7 +94,7 @@ public class Benchmark implements InitializingBean, DisposableBean {
 
         log("starts burst query");
 
-        while ((System.currentTimeMillis() - startTime) < (1000 * 20)) {
+        while ((System.currentTimeMillis() - startTime) < (1000 * 30)) {
             CrewMember[] manyMembers = gigaSpace.readMultiple(new SQLQuery<>(CrewMember.class, null), 200);
             log("Expected read 200 crew members. Actual is:   " + manyMembers.length);
             try {
