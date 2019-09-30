@@ -27,7 +27,6 @@
         <module>mirror</module>
         <module>space</module>
         <module>crew-members-feeder</module>
-        <module>flights-feeder</module>
         <module>benchmark</module>
     </modules>
     <dependencies>
