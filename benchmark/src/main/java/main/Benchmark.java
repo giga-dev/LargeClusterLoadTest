@@ -32,6 +32,7 @@ public class Benchmark implements InitializingBean, DisposableBean {
     //private ScheduledExecutorService printSummeryService;
     //private OperationsTimeTaker opTimeRecorder;
     //private Summery summery;
+    private static int CREW_MEMBER_PREFIX = 1000;
 
     public void run() {
         //opTimeRecorder = new OperationsTimeTaker();
@@ -51,17 +52,13 @@ public class Benchmark implements InitializingBean, DisposableBean {
     }
 
     private void initDoQueriesExecutor() throws InterruptedException {
-        queriesService = Executors.newScheduledThreadPool(1);
+        queriesService = Executors.newScheduledThreadPool(3);
         queriesService.scheduleAtFixedRate(this::doRegularQuery, 0, 1, TimeUnit.SECONDS);
         queriesService.scheduleAtFixedRate(this::doBurstQuery, 0, 1, TimeUnit.MINUTES);
+        queriesService.scheduleAtFixedRate(this::doWriteQuery, 0, 1, TimeUnit.SECONDS);
+
         queriesService.awaitTermination(30, TimeUnit.DAYS);
     }
-
-    /*private void initPrintSummeryExecuter() throws InterruptedException {
-        printSummeryService = Executors.newScheduledThreadPool(1);
-        Runnable task = () -> log(summery.intermediateSummery());
-        printSummeryService.scheduleAtFixedRate(task, 0, 30, TimeUnit.SECONDS);
-    }*/
 
     private void waitForSpaceToFillWithCrewMembers(int expectedNumOfCrewMembers) throws InterruptedException {
         boolean finish = false;
@@ -80,6 +77,48 @@ public class Benchmark implements InitializingBean, DisposableBean {
         }
     }
 
+    private void doWriteQuery() {
+
+        CREW_MEMBER_PREFIX = CREW_MEMBER_PREFIX + 100;
+        int i = CREW_MEMBER_PREFIX ;
+        CrewMember[] crewMembersToAdd = new CrewMember[100];
+
+        int l = 0;
+        for (int j = i; j < i + 100; j++) {
+            crewMembersToAdd[l] = CrewMember.createCrewMember(j);
+            ++l;
+            log("new id is " + j);
+        }
+
+        Integer[] crewMembersAddedIds = new Integer[100];
+        for(int n = 0; n < 100; n++){
+            crewMembersAddedIds[n] = crewMembersToAdd[n].getId();
+        }
+
+        gigaSpace.writeMultiple(crewMembersToAdd);
+        gigaSpace.takeByIds(CrewMember.class, crewMembersAddedIds);
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    /*private void doTakeQuery() {
+        while(true) {
+            log("for take crew members");
+            gigaSpace.takeMultiple(new SQLQuery<>(CrewMember.class, null, 100));
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+*/
+
     private void doRegularQuery() {
         try {
             CrewMember[] members = gigaSpace.readMultiple(new SQLQuery<>(CrewMember.class, null), 100);
@@ -96,7 +135,7 @@ public class Benchmark implements InitializingBean, DisposableBean {
 
         while ((System.currentTimeMillis() - startTime) < (1000 * 30)) {
             CrewMember[] manyMembers = gigaSpace.readMultiple(new SQLQuery<>(CrewMember.class, null), 200);
-            log("Expected read 200 crew members. Actual is:   " + manyMembers.length);
+            //log("Expected read 200 crew members. Actual is:   " + manyMembers.length);
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -107,24 +146,6 @@ public class Benchmark implements InitializingBean, DisposableBean {
 
         log("end of burst query");
     }
-
-/*
-    private <T> T[] queryAll(Class <T> type) throws TimeoutException {
-        //summery.incTotalQueries();
-        //opTimeRecorder.reportOperationStart();
-        T[] res = gigaSpace.readMultiple(new SQLQuery<>(type, null), 200);
-
-        if (res == null) {
-            throw new TimeoutException();
-        } else {
-            //long queryDurationNano = opTimeRecorder.reportOperationEnd();
-        //    summery.reportQueryDuration(queryDurationNano);
-        }
-
-        return res;
-    }
-*/
-
 
     private static void log(String msg, Exception e) {
         logger.log(Level.SEVERE, msg);
