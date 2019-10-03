@@ -1,6 +1,7 @@
 package main;
 
 import com.gigaspaces.common.model.CrewMember;
+import com.gigaspaces.common.model.RandomUtils;
 import com.j_spaces.core.client.SQLQuery;
 import org.openspaces.core.GigaSpace;
 import org.openspaces.core.context.GigaSpaceContext;
@@ -29,19 +30,12 @@ public class Benchmark implements InitializingBean, DisposableBean {
     private GigaSpace gigaSpace;
     private static final Logger logger = Logger.getLogger(Benchmark.class.getName());;
     private ScheduledExecutorService queriesService;
-    //private ScheduledExecutorService printSummeryService;
-    //private OperationsTimeTaker opTimeRecorder;
-    //private Summery summery;
-    private static int CREW_MEMBER_PREFIX = 1000;
 
     public void run() {
-        //opTimeRecorder = new OperationsTimeTaker();
-        //summery = new Summery();
         setupLogger();
         log("Start Benchmark");
         try {
             waitForSpaceToFillWithCrewMembers(NUM_OF_CREW_MEMBERS);
-            //initPrintSummeryExecuter();
             initDoQueriesExecutor();
         } catch (InterruptedException e) {
             log("--------------------------------------------------------------------");
@@ -52,10 +46,11 @@ public class Benchmark implements InitializingBean, DisposableBean {
     }
 
     private void initDoQueriesExecutor() throws InterruptedException {
-        queriesService = Executors.newScheduledThreadPool(3);
+        queriesService = Executors.newScheduledThreadPool(4);
         queriesService.scheduleAtFixedRate(this::doRegularQuery, 0, 1, TimeUnit.SECONDS);
         queriesService.scheduleAtFixedRate(this::doBurstQuery, 0, 1, TimeUnit.MINUTES);
-        queriesService.scheduleAtFixedRate(this::doWriteQuery, 0, 1, TimeUnit.SECONDS);
+        queriesService.scheduleAtFixedRate(this::doWrite, 0, 60, TimeUnit.SECONDS);
+        queriesService.scheduleAtFixedRate(this::doTake, 30, 60, TimeUnit.SECONDS);
 
         queriesService.awaitTermination(30, TimeUnit.DAYS);
     }
@@ -77,74 +72,53 @@ public class Benchmark implements InitializingBean, DisposableBean {
         }
     }
 
-    private void doWriteQuery() {
+    private void doWrite() {
+        long startTime = System.currentTimeMillis();
 
-        CREW_MEMBER_PREFIX = CREW_MEMBER_PREFIX + 100;
-        int i = CREW_MEMBER_PREFIX ;
-        CrewMember[] crewMembersToAdd = new CrewMember[100];
-
-        int l = 0;
-        for (int j = i; j < i + 100; j++) {
-            crewMembersToAdd[l] = CrewMember.createCrewMember(j);
-            ++l;
-            log("new id is " + j);
-        }
-
-        Integer[] crewMembersAddedIds = new Integer[100];
-        for(int n = 0; n < 100; n++){
-            crewMembersAddedIds[n] = crewMembersToAdd[n].getId();
-        }
-
-        gigaSpace.writeMultiple(crewMembersToAdd);
-        gigaSpace.takeByIds(CrewMember.class, crewMembersAddedIds);
-
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    /*private void doTakeQuery() {
-        while(true) {
-            log("for take crew members");
-            gigaSpace.takeMultiple(new SQLQuery<>(CrewMember.class, null, 100));
+        while ((System.currentTimeMillis() - startTime) < (1000 * 30)) {
+            for (int i = 0; i < 100; i++) {
+                 gigaSpace.write(CrewMember.createCrewMember(RandomUtils.nextInt()));
+            }
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                log("Got exception: ", e);
             }
         }
     }
-*/
+
+    private void doTake() {
+        long startTime = System.currentTimeMillis();
+
+        while ((System.currentTimeMillis() - startTime) < (1000 * 30)) {
+            gigaSpace.takeMultiple(new SQLQuery<CrewMember>(), 100);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                log("Got exception: ", e);
+            }
+        }
+    }
 
     private void doRegularQuery() {
         try {
-            CrewMember[] members = gigaSpace.readMultiple(new SQLQuery<>(CrewMember.class, null), 100);
+            gigaSpace.readMultiple(new SQLQuery<>(CrewMember.class, null), 100);
         } catch (Exception e) {
             log("Got exception: ", e);
-            //summery.reportException(e);
         }
     }
 
     private void doBurstQuery() {
         long startTime = System.currentTimeMillis();
 
-        log("starts burst query");
-
         while ((System.currentTimeMillis() - startTime) < (1000 * 30)) {
-            CrewMember[] manyMembers = gigaSpace.readMultiple(new SQLQuery<>(CrewMember.class, null), 200);
-            //log("Expected read 200 crew members. Actual is:   " + manyMembers.length);
+            gigaSpace.readMultiple(new SQLQuery<>(CrewMember.class, null), 200);
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 log("Got exception: ", e);
-                //summery.reportException(e);
             }
         }
-
-        log("end of burst query");
     }
 
     private static void log(String msg, Exception e) {
@@ -196,12 +170,9 @@ public class Benchmark implements InitializingBean, DisposableBean {
     @Override
     public void destroy() throws Exception {
         log("Benchmark End");
-        //printSummeryService.shutdown();
-        //printSummeryService.awaitTermination(10, TimeUnit.SECONDS);
         queriesService.shutdown();
         queriesService.awaitTermination(10, TimeUnit.SECONDS);
         log("Printing final summery ...");
-        //log(summery.finalSummery());
     }
 
     @Override
