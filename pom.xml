@@ -20,6 +20,8 @@
 	</pluginRepositories>
     <properties>
         <gsVersion>15.0.0-SNAPSHOT</gsVersion>
+        <springVersion>5.1.7.RELEASE</springVersion>
+        <hibernateVersion>5.3.10.Final</hibernateVersion>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <modules>
@@ -34,7 +36,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-orm</artifactId>
-            <version>5.1.7.RELEASE</version>
+            <version>${springVersion}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -52,7 +54,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
-            <version>5.1.7.RELEASE</version>
+            <version>${springVersion}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -104,7 +106,7 @@
                 <dependency>
                     <groupId>org.springframework</groupId>
                     <artifactId>spring-orm</artifactId>
-                    <version>5.1.7.RELEASE</version>
+                    <version>${springVersion}</version>
                     <scope>compile</scope>
                 </dependency>
             </dependencies>
