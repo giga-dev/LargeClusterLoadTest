@@ -20,7 +20,7 @@
 	</pluginRepositories>
     <properties>
         <java.version>17</java.version>
-        <gsVersion>17.1.0-SNAPSHOT</gsVersion>
+        <gsVersion>17.1.1-rc1</gsVersion>
         <springVersion>6.2.1</springVersion>
         <hibernateVersion>6.4.8.Final</hibernateVersion>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
